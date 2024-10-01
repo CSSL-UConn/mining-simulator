@@ -10,6 +10,7 @@
 #include "utils.hpp"
 #include "block.hpp"
 #include "blockchain_settings.hpp"
+#include "logging.h"
 
 #include <cassert>
 #include <unordered_set>
@@ -89,6 +90,17 @@ void Blockchain::publishBlock(std::unique_ptr<Block> block) {
 
 BlockCount Blockchain::blocksOfHeight(BlockHeight height) const {
     return BlockCount(_blocksIndex[rawHeight(height)].size());
+}
+
+const std::vector<Block *> Blockchain::blocksAtHeight(BlockHeight height) const {
+    
+    std::vector<Block *> possiblities;
+    for (size_t index : _blocksIndex[rawHeight(height)]) {
+            possiblities.push_back(_blocks[index].get());
+    }
+
+   assert(possiblities.size() > 0);
+   return possiblities; 
 }
 
 const std::vector<Block *> Blockchain::oldestBlocks(BlockHeight height) const {
@@ -176,12 +188,34 @@ Block &Blockchain::oldest(BlockHeight height, const Miner &miner) const {
     return oldest(height);
 }
 
+
+
+Block *Blockchain::newestBlockByMinerAtHeight(BlockHeight height, const Miner &miner) const {
+
+    BlockHeight heightToCheck = height;
+    while(heightToCheck >= 1) {
+        for (size_t index : _blocksIndex[rawHeight(heightToCheck)]) {
+        if (_blocks[index]->minedBy(&miner)) {
+            return _blocks[index].get();
+        }
+    }
+        heightToCheck -= 1;
+    }
+    
+    return nullptr;
+
+}
+
 Value Blockchain::gap(BlockHeight height) const {
     return rem(most(height - BlockHeight(1))) - rem(most(height));
 }
 
 Value Blockchain::rem(const Block &block) const {
-    return valueNetworkTotal - block.txFeesInChain;
+    return valueNetworkTotal - block.txFeesInChain + block.tip;
+}
+
+void Blockchain::sub(const Value feeToDelete) const {
+    valueNetworkTotal - feeToDelete;
 }
 
 const std::vector<const Block *> Blockchain::getHeads() const {

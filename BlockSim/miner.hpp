@@ -28,8 +28,7 @@ private:
     BlockTime _lastCostUpdate;
     BlockTime _nextMiningTime;
     BlockTime _nextPublishTime;
-    bool waitingForBroadcast;
-    
+    bool waitingForBroadcast; 
     bool findsBlock(const Blockchain &blockchain);
     void updateNextPublishTime(BlockTime newTime, const Blockchain &chain);
     
@@ -45,7 +44,12 @@ public:
     void changeStrategy(const Strategy &strategy, const Blockchain &blockchain);
     
     Block *newestUnpublishedBlock() const;
+    BlockHeight lastPublishedBlock;
     
+    void setLastPublishedBlock(BlockHeight height) {
+        lastPublishedBlock = height;
+    }
+
     void finalize(Blockchain &blockchain);
     void reset(const Blockchain &blockchain);
     bool wantsToBroadcast() const { return waitingForBroadcast; }

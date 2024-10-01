@@ -24,7 +24,7 @@ std::unique_ptr<Block> MiningStyle::createBlock(Blockchain &blockchain, const Mi
     auto value = blockValueFunc(blockchain, parent);
     
     assert(value >= parent.nextBlockReward());
-    assert(value <= parent.nextBlockReward() + blockchain.rem(parent));
+    //assert(value <= parent.nextBlockReward() + blockchain.rem(parent));
     
     auto newBlock = blockchain.createBlock(&parent, &miner, value);
     

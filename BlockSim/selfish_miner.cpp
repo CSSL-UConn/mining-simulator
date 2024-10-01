@@ -15,6 +15,7 @@
 #include "strategy.hpp"
 
 #include <cmath>
+#include <iostream>
 #include <assert.h>
 #include <algorithm>
 
@@ -32,6 +33,7 @@ Block &selfishBlockToMineOn(const Miner &me, const Blockchain &chain) {
     if (newest && newest->height >= chain.getMaxHeightPub()) {
         return *newest;
     } else {
+        // change to be multiple possibilities
         return chain.oldest(chain.getMaxHeightPub(), me);
     }
 }
@@ -62,8 +64,10 @@ BlockHeight SelfishPublishingStyle::heightToPublish(const Blockchain &chain, con
     auto publicHeight = chain.getMaxHeightPub();
     BlockHeight heightToPublish(publicHeight);
     // If private chain is one block ahead of the public chain and there is a race for the public head then publish
+
     if (privateHeight == publicHeight + BlockHeight(1) && chain.blocksOfHeight(publicHeight) > BlockCount(1)) {
         heightToPublish = privateHeight;
     }
+
     return heightToPublish;
 }

@@ -26,6 +26,8 @@ void Block::reset(const Block *parent_, const Miner *miner_, BlockTime timeSecon
     height = parent_->height + BlockHeight(1);
     timeMined = timeSeconds_;
     timeBroadcast = timeMax;
+    tip = 0;
+
     value = txFees + parent_->nextBlockReward();
     txFeesInChain = txFees + parent_->txFeesInChain;
     valueInChain = txFees + parent_->valueInChain + parent_->nextBlockReward();

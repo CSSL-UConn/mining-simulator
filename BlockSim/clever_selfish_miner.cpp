@@ -33,7 +33,7 @@ CleverSelfishPublishingStyle::CleverSelfishPublishingStyle(Value cutoff_) : Self
 BlockHeight CleverSelfishPublishingStyle::heightToPublish(const Blockchain &blockchain, const Miner &me, std::vector<std::unique_ptr<Block>> &unpublishedBlocks) const {
     assert(unpublishedBlocks.back());
     if(unpublishedBlocks.back()->height == blockchain.getMaxHeightPub() + BlockHeight(1) &&
-       unpublishedBlocks.back()->value >= cutoff &&
+       unpublishedBlocks.back()->value >= Value(cutoff * blockchain.expectedBlockSize() ) &&
        unpublishedBlocks.size() == 1) {
         //finding a block. Normally hide (point of selfish mining) Might decide to normal mine if big block
         //(not worth the risk of using it to selfish mine)

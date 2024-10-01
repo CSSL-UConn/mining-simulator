@@ -28,6 +28,7 @@ public:
     Value txFeesInChain;
     Value valueInChain;
     Value blockReward;
+    Value tip;
     
     Block(const Block *parent_, const Miner *miner_, BlockTime timeSeconds, Value txFees, BlockHeight height, Value txFeesInChain, Value valueInChain, Value blockReward);
     

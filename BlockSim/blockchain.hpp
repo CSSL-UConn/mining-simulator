@@ -36,6 +36,7 @@ class Blockchain {
     
     Block *blockByMinerAtHeight(BlockHeight height, const Miner &miner) const;
     
+    
 public:
     Blockchain(BlockchainSettings blockchainSettings);
     
@@ -51,7 +52,10 @@ public:
     const Block &winningHead() const;
     
     BlockCount blocksOfHeight(BlockHeight height) const;
+
+    const std::vector<Block *> blocksAtHeight(BlockHeight height) const;
     
+   
     const std::vector<Block *> oldestBlocks(BlockHeight height) const;
     Block &oldest(BlockHeight height) const;
     Block &most(BlockHeight age) const;
@@ -75,9 +79,11 @@ public:
     
     Value gap(BlockHeight i) const;
     Value rem(const Block &block) const;
+    void sub(Value feeToRemove) const;
     
     Block &most(BlockHeight age, const Miner &miner) const;
     Block &oldest(BlockHeight age, const Miner &miner) const;
+    Block *newestBlockByMinerAtHeight(BlockHeight height, const Miner &miner) const;
 };
 
 #endif /* blockchain_hpp */

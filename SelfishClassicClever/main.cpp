@@ -82,6 +82,7 @@ int main(int, const char *argv []) {
         std::function<Value(const Blockchain &, Value)> forkFunc(std::bind(functionForkPercentage, _1, _2, 2));
 
         auto gamma = percentageGamma/100.0;
+       
 //        auto defaultStrat = createPettyStrategy(NOISE_IN_TRANSACTIONS, SELFISH_GAMMA);
         auto defaultStrat = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma);
         auto cleverStrat = createCleverSelfishStrategy(false, Value(25)*SATOSHI_PER_BITCOIN);

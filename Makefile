@@ -4,8 +4,8 @@ CPPFLAGS := -std=c++14 -Wall -g
 LGSL := $(shell gsl-config --libs)
 IGSL := $(shell gsl-config --cflags)
 
-LBLAS := -L/home/linuxbrew/.linuxbrew/opt/openblas/lib
-IBLAS := -I/home/linuxbrew/.linuxbrew/opt/openblas/include
+LBLAS := -L/opt/homebrew/opt/openblas/lib
+IBLAS := -I/opt/homebrew/opt/openblas/include
 
 LIB := -L./
 INC := -I./
@@ -44,9 +44,54 @@ selfish-nuni: SelfishNetworkUniformSim/main.cpp $(OBJS)
 selfish-comp: SelfishClassicClever/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
 
-selfish: SelfishSim/main.cpp $(OBJS)
+selfish: SingleSelfishSim/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
 
+publishN: PublishNSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+selfish-petty: SelfishSimPetty/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+stubborn-trail: StubbornTrailSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+stubborn-fork: StubbornForkSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+stubborn-lead: StubbornLeadSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+# Combos 
+stubborn-lead-fork: StubbornLeadForkSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+stubborn-lead-trail: StubbornLeadTrailSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+stubborn-trail-fork: StubbornTrailForkSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+stubborn-lead-trail-fork: StubbornLeadTrailForkSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+# Rational
+
+rational: SingleStratRationalSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+
+# Incentivzed
+incentive-selfish: IncentiveSelfishSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+# Multiple Miners
+
+selfish-double: DoubleSelfishSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+selfish-triple: TripleSelfishSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+double-strat: DoubleStratSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
 
 plot-nuni: 
 	python3 plot.py "Profitability of Selfish Mining in Presence of Uni-Dist Network Delay with α = 0.${ALPHA}" "Selfish Network Delay - Honest Network Delay (sec)" selfish-nuni_500_${ALPHA}_0.txt selfish-nuni_500_${ALPHA}_1.txt 
@@ -73,7 +118,7 @@ plot-comp:
 	$(CPP) $(CPPFLAGS) $(INC) $(IGSL) $(IBLAS) $(LGSL) $(LBLAS) $(LDLIBS) -o $@ -c $<
 
 clean:
-	rm -rf BlockSim/*.o *.o strat selfish
+	rm -rf BlockSim/*.o *.o strat selfish stubborn-fork stubborn-trail stubborn-lead
 
 .PHONY: all clean
 

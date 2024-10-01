@@ -50,37 +50,48 @@ Block &blockToMineOn(const Miner &me, const Blockchain &chain, double gamma) {
             defaultBlock = possiblities[1];
             selfishBlock = possiblities[0];
         }
-        
-        //assert(ownBlock(&me, defaultBlock));
-        
+
+        COMMENTARY("Next block reward default" << defaultBlock->nextBlockReward() << "\n");
+        COMMENTARY("Default Block total tx fees" << defaultBlock->txFeesInChain << "\n");
+        COMMENTARY("Default block value (block reward + tx fees) " << defaultBlock->value << "\n");
+        COMMENTARY("default block total value"<< defaultBlock->valueInChain << "\n");
+        COMMENTARY("Remaining:" << chain.rem(*defaultBlock) << "\n");
+
+        COMMENTARY("Selfish Block total tx fees" << selfishBlock->txFeesInChain << "\n");
+        COMMENTARY("Selfish block value (block reward + tx fees) " << selfishBlock->value << "\n");
+        COMMENTARY("Selfish block total value"<< selfishBlock->valueInChain << "\n");
+        COMMENTARY("Tip" << selfishBlock->tip << "\n");
+
+        COMMENTARY("Remaining:" << chain.rem(*selfishBlock) << "\n");
         //with chance gamma, mine on the selfish miner's block, otherwise not
         if (selectRandomChance() < gamma) {
             return *selfishBlock;
+            COMMENTARY("Having to mine on selfish block due to gamma. ");
             
         } else {
-            COMMENTARY("Having to mine on selfish block due to gamma. ");
+            
             return *defaultBlock;
         }
-    } else if (possiblities.size() == 3){ // we must choose between classic selfish, clever selfish, and honest miner
-                //mineHere should already be set to the side of the fork not the selfish miner
-        Block *cleverSelfishBlock = nullptr;
-        Block *classicSelfishBlock = nullptr;
+    } else if (possiblities.size() == 3){ // we must choose between multiple selfish miners, and honest miner
+    
+        // select the two miners that are selfish
+        Block *Selfish1Block = nullptr;
+        Block *Selfish2Block = nullptr;
         Block *defaultBlock = nullptr;
         if (ownBlock(&me, possiblities[0])) {
             defaultBlock = possiblities[0];
-            classicSelfishBlock = possiblities[1];
-            cleverSelfishBlock = possiblities[2];
+            Selfish1Block = possiblities[1];
+            Selfish2Block = possiblities[2];
         } else if (ownBlock(&me, possiblities[1])){
             defaultBlock = possiblities[1];
-            classicSelfishBlock = possiblities[0]; // could either be clever instead...
-            cleverSelfishBlock = possiblities[2]; // could be classic instead 
+            Selfish1Block = possiblities[0]; 
+            Selfish2Block = possiblities[2]; 
         } else {
             defaultBlock = possiblities[2];
-            classicSelfishBlock = possiblities[0]; // could either be clever instead...
-            cleverSelfishBlock = possiblities[1]; // could be classic instead 
+            Selfish1Block = possiblities[0]; 
+            Selfish2Block = possiblities[1];  
         }
-        
-        //assert(ownBlock(&me, defaultBlock));
+
         
         //with chance gamma, mine on the selfish miner's block, otherwise not
         if (selectRandomChance() < gamma) { // mine on selfish block in general
@@ -88,13 +99,60 @@ Block &blockToMineOn(const Miner &me, const Blockchain &chain, double gamma) {
             std::default_random_engine generator;
             std::uniform_int_distribution<int> distribution(0,1);
             int coin_toss = distribution(generator);
-            return ( coin_toss )?   *classicSelfishBlock : *cleverSelfishBlock; // coin toss: decide whether we want to mine on CLASSIC OR CLEVER selfish block in particular
-            
+            // models the choice of theta (default uniform)
+            return ( coin_toss )?   *Selfish1Block : *Selfish2Block; // coin toss: decide whether we want to mine on which selfish block in particular
+            COMMENTARY("Having to mine on selfish block due to gamma. ");
         } else {
-            COMMENTARY("Having to mine on selfish block due to gamma. ");  // what ? (should be mine on honest block...)
             return *defaultBlock;
         }
-    } else { //lolwut
+    } else if (possiblities.size() == 4){ 
+
+        // select the two miners that are selfish
+        Block *Selfish1Block = nullptr;
+        Block *Selfish2Block = nullptr;
+        Block *Selfish3Block = nullptr;
+        Block *defaultBlock = nullptr;
+        if (ownBlock(&me, possiblities[0])) {
+            defaultBlock = possiblities[0];
+            Selfish1Block = possiblities[1];
+            Selfish2Block = possiblities[2];
+            Selfish3Block = possiblities[3]; 
+        } else if (ownBlock(&me, possiblities[1])){
+            defaultBlock = possiblities[1];
+            Selfish1Block = possiblities[0]; 
+            Selfish2Block = possiblities[2];
+            Selfish3Block = possiblities[3]; 
+        } else if (ownBlock(&me, possiblities[2])) {
+            defaultBlock = possiblities[2];
+            Selfish1Block = possiblities[0]; 
+            Selfish2Block = possiblities[1]; 
+            Selfish3Block = possiblities[3]; 
+        } else {
+            defaultBlock = possiblities[3];
+            Selfish1Block = possiblities[0]; 
+            Selfish2Block = possiblities[1]; 
+            Selfish3Block = possiblities[2];  
+        }
+    
+        //with chance gamma, mine on the selfish miner's block, otherwise not
+        if (selectRandomChance() < gamma) { // mine on selfish block in general
+
+            
+            double choice = selectRandomChance();
+            // theta is set to uniform
+            if (choice < .33) {
+                return *Selfish1Block;
+            } else if (choice < .66) {
+                return *Selfish2Block;
+            } else {
+                return *Selfish3Block;
+            }
+        } else {
+            return *defaultBlock;
+        }
+    
+    } else { 
+        ERROR(possiblities.size());
         ERROR("\n#####ERROR UNFORSEEN CIRCUMSTANCES IN LOGIC FOR SELFISH MINING SIM###\n\n" << std::endl);
         return *possiblities[0];
     }

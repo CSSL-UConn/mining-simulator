@@ -83,6 +83,7 @@ std::unique_ptr<Block> Miner::miningPhase(Blockchain &chain) {
         if (strategy.get().publisher->withholdsBlocks()) {
             waitingForBroadcast = true;
             unbroadcastBlocks.push_back(std::move(block));
+
         } else {
             block->broadcast(chain.getTime() + params.networkDelay);
             return std::move(block);

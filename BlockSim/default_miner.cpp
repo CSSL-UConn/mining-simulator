@@ -44,7 +44,8 @@ Block &defaultBlockToMineOnNonAtomic(const Miner &, const Blockchain &chain) {
 
 Value defaultValueInMinedChild(const Blockchain &chain, const Block &mineHere, bool noiseInTransactions) {
     auto minVal = mineHere.nextBlockReward();
-    auto maxVal = chain.rem(mineHere) + mineHere.nextBlockReward();
+
+    auto maxVal = chain.rem(mineHere) + mineHere.nextBlockReward() + mineHere.tip;
     //this represents some noise-- no noise, value would = valueMax
     //value = ((valueMax - valueMin)*((dis(gen)+.7)/1.7)) + valueMin;
     auto value = maxVal;

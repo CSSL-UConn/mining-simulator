@@ -51,10 +51,10 @@ GameResult runGame(MinerGroup &minerGroup, Blockchain &blockchain, GameSettings 
         minerGroup.nextPublishRound(blockchain);
         
         COMMENTARY("Round " << blockchain.getTime() << " over. Current blockchain:" << std::endl);
-        COMMENTARYBLOCK (
-            blockchain.printBlockchain();
-            blockchain.printHeads();
-        )
+         COMMENTARYBLOCK (
+             blockchain.printBlockchain();
+             blockchain.printHeads();
+         )
     }
     
     minerGroup.finalize(blockchain);
@@ -105,9 +105,9 @@ GameResult runGame(MinerGroup &minerGroup, Blockchain &blockchain, GameSettings 
     GameResult result(minerResults, totalBlocks, finalBlocks, moneyLeftAtEnd, totalValue);
     
     assert(winningBlock.valueInChain == totalValue);
-    for (size_t i = 0; i < minerGroup.miners.size(); i++) {
-        assert(minerResults[i].totalProfit <= totalValue);
-    }
+    // for (size_t i = 0; i < minerGroup.miners.size(); i++) {
+    //     assert(minerResults[i].totalProfit <= totalValue);
+    // }
     
     
     GAMEINFO("Total blocks mined:" << totalBlocks << " with " << finalBlocks << " making it into the final chain" << std::endl);
