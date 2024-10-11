@@ -34,7 +34,7 @@
 #define NOISE_IN_TRANSACTIONS false //miners don't put the max value they can into a block (simulate tx latency)
 
 #define NETWORK_DELAY BlockTime(0)         //network delay in seconds for network to hear about your block
-#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(20)
+#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(20000)
 
 #define LAMBERT_COEFF 0.13533528323661//coeff for lambert func equil  must be in [0,.2]
 //0.13533528323661 = 1/(e^2)
@@ -59,12 +59,12 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
     
-    int numberOfGames = 1;
+    int numberOfGames = 100;
     
     //#########################################################################################
     //idea of simulation: 2 miners, only an honest, and a selfish miner. Run many games, with the
     //size of the two changing. Plot the expected profit vs. actual profit. (reproduce fig 2 in selfish paper)
-    GAMEINFO("#####\nRunning Incentive Selfish Mining Simulation\n#####" << std::endl);
+    GAMEINFO("#####\nRunning Selfish Mining Simulation\n#####" << std::endl);
     std::ofstream plot;
     char  filename[1024] = {0};
     sprintf(filename, "%s_%s.txt", argv[0], argv[1]);
@@ -73,15 +73,16 @@ int main(int argc, const char *argv[]) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return 1;
     }
-    plot << "Gamma, Selfish Profit, Selfish Hash Rate, Honest Hash Rate" << std::endl;
+    plot << "RationalVal, Gamma, Selfish Profit 1, Selfish Miner Hash Rate, Rational Profit,  Honest Profit" << std::endl;
     //start running games
 
-    for(double gammaVal = 0.51; gammaVal < 1.01; gammaVal+=.01) {
-
-    for(double hashVal = 0.41; hashVal < .51; hashVal+=1.01) {
+    for (double rationalVal = 0.0; rationalVal < .51; rationalVal += 0.25 )
+    for(double gammaVal = 0; gammaVal < 1.01; gammaVal+=1.50) {
+    for(double hashVal = 0.1; hashVal < 1-rationalVal; hashVal+=.01) {
 
         HashRate selfishPower = HashRate(hashVal);
-        HashRate honestPower = HashRate(1-hashVal);
+        HashRate rationalPower = HashRate(rationalVal);
+        HashRate honestPower = HashRate(1-hashVal- rationalVal);
 
         for (int gameNum = 1; gameNum <= numberOfGames; gameNum++) {
         
@@ -92,16 +93,20 @@ int main(int argc, const char *argv[]) {
         
         std::function<Value(const Blockchain &, Value)> forkFunc(std::bind(functionForkPercentage, _1, _2, 2));
 
-        auto defaultStrat = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
-        auto incentiveSelfishStrat = createIncentiveSelfishStrategy(NOISE_IN_TRANSACTIONS, 1, 1);
+        auto rationalStrat = createRationalStrategy(NOISE_IN_TRANSACTIONS);
+        auto defaultStrat = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
+        auto strat = createStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, 2);
+
+
 
         MinerParameters selfishMinerParams = {0, std::to_string(0), selfishPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
-        MinerParameters defaultinerParams = {1, std::to_string(1), honestPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
+        MinerParameters defaultinerParams = {2, std::to_string(2), honestPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};MinerParameters rationalParams = {2, std::to_string(2), rationalPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
 
-        
-        miners.push_back(std::make_unique<Miner>(selfishMinerParams, *incentiveSelfishStrat));
+        miners.push_back(std::make_unique<Miner>(selfishMinerParams, *strat));
+        miners.push_back(std::make_unique<Miner>(rationalParams, *rationalStrat));  
         miners.push_back(std::make_unique<Miner>(defaultinerParams, *defaultStrat));
-        
+       
+
         MinerGroup minerGroup(std::move(miners));
         
         GAMEINFO("\n\nGame#: " << gameNum << " The board is set, the pieces are in motion..." << std::endl);
@@ -128,10 +133,10 @@ int main(int argc, const char *argv[]) {
         assert(minerResults[0].totalProfit <= result.moneyInLongestChain);
         
         auto fractionOfProfits = valuePercentage(minerResults[0].totalProfit, result.moneyInLongestChain);
-        auto honestFractionOfProfits = valuePercentage(minerResults[1].totalProfit, result.moneyInLongestChain);
-        GAMEINFO("Gamma" << "Fraction earned by selfish:" << fractionOfProfits << " with " << selfishPower << " fraction of hash power" << "Fraction by honest: " << honestFractionOfProfits << std::endl);
-        plot << gammaVal << ", " << fractionOfProfits<< ", " << selfishPower << ", " << honestFractionOfProfits << std::endl;
-         
+        auto rationalProfits = valuePercentage(minerResults[1].totalProfit, result.moneyInLongestChain);
+        auto honestFractionOfProfits = valuePercentage(minerResults[2].totalProfit, result.moneyInLongestChain);
+        GAMEINFO("RationalVal" << "Gamma" << "Fraction earned by selfish miner:" << fractionOfProfits << " with " << selfishPower  << "Fraction by Rational" << rationalProfits <<  "Fraction by honest: " << honestFractionOfProfits << std::endl);
+        plot << rationalVal << ", " << gammaVal << ", " << fractionOfProfits << ", " << selfishPower << ", " << rationalProfits << ", " << honestFractionOfProfits << std::endl;
         }
     }
     }  

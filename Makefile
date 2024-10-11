@@ -84,10 +84,7 @@ incentive-selfish: IncentiveSelfishSim/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
 # Multiple Miners
 
-selfish-double: DoubleSelfishSim/main.cpp $(OBJS)
-	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
-
-selfish-triple: TripleSelfishSim/main.cpp $(OBJS)
+double-strat-rational: DoubleStratRationalSim/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
 
 double-strat: DoubleStratSim/main.cpp $(OBJS)
