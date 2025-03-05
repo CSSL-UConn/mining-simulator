@@ -58,8 +58,8 @@ int main(int argc, const char *argv[]) {
     int numberOfGames = 100;
     
     //#########################################################################################
-    //idea of simulation: 2 miners, only an honest, and a selfish miner running a stubborn mining strategy. Run many games, with the
-    //size of the two changing. Plot the expected profit vs. actual profit. (reproduce fig 2 in selfish paper)
+    //idea of simulation: 2 miners, only an honest, and a selfish miner running a stubborn trailing selfish mining strategy. Run many games, with the
+    //size of the two changing. Plot the expected profit vs. actual profit. 
     GAMEINFO("#####\nRunning Selfish Mining Simulation\n#####" << std::endl);
     std::ofstream plot;
     char  filename[1024] = {0};
@@ -89,8 +89,8 @@ int main(int argc, const char *argv[]) {
         
         std::function<Value(const Blockchain &, Value)> forkFunc(std::bind(functionForkPercentage, _1, _2, 2));
 
-//        auto defaultStrat = createPettyStrategy(NOISE_IN_TRANSACTIONS, SELFISH_GAMMA);
         auto defaultStubbornTrailStrat = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
+        //@dev change the length of the trail
         auto trailStrat1 = createStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, 1);
 
         MinerParameters selfishMinerParams = {0, std::to_string(0), attackerPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
@@ -98,7 +98,6 @@ int main(int argc, const char *argv[]) {
 
         
         miners.push_back(std::make_unique<Miner>(selfishMinerParams, *trailStrat1));
-        //miners.push_back(std::make_unique<Miner>(pettyMinerParams, *selfishStrat2));
         miners.push_back(std::make_unique<Miner>(defaultinerParams, *defaultStubbornTrailStrat));
         
         MinerGroup minerGroup(std::move(miners));

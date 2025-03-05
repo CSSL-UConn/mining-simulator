@@ -61,9 +61,9 @@ int main(int argc, const char *argv[]) {
     int numberOfGames = 100;
     
     //#########################################################################################
-    //idea of simulation: 2 miners, only an honest, and a stubborn fork miner. Run many games, with the
-    //size of the two changing. Plot the expected profit vs. actual profit. (reproduce fig 2 in selfish paper)
-    GAMEINFO("#####\nRunning Stubborn Fork Mining Simulation\n#####" << std::endl);
+    //idea of simulation: 2 miners, only an honest, and a stubborn lead trail fork miner. Run many games, with the
+    //size of the two changing. Plot the expected profit vs. actual profit. 
+    GAMEINFO("#####\nRunning Stubborn Lead Trail Fork Mining Simulation\n#####" << std::endl);
     std::ofstream plot;
     char  filename[1024] = {0};
     sprintf(filename, "%s_%s.txt", argv[0], argv[1]);
@@ -72,7 +72,7 @@ int main(int argc, const char *argv[]) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return 1;
     }
-    plot << "Gamma, Stubborn Fork Profit, Stubborn Lead Trail Fork Hash Rate, Honest Profit" << std::endl;
+    plot << "Gamma, Stubborn Lead Trail Fork Profit, Stubborn Lead Trail Fork Hash Rate, Honest Profit" << std::endl;
     //start running games
 
     for(double gammaVal = 0.005; gammaVal < 1.01; gammaVal+=0.005) {
