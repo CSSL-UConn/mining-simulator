@@ -1,12 +1,14 @@
 Bitcoin Mining Simulator
 =======
 
-This is a simulator intended for testing non-default bitcoin mining strategies.
+ This is a simulator intended for testing non-default bitcoin mining strategies 
+ 
+ This simulator has been adapated from CITP's mining simulator avaiable at (https://github.com/citp/mining_simulator/).
 
 Installation
 ------------
 
-The Bitcoin Mining Simulator has been developed and tested on Mac OS X 10.11.4.
+The Bitcoin Mining Simulator has been developed and tested on Mac OS Sequoia 15.3.1.
 This software is currently setup to be run using Apple's Xcode IDE.
 
 The code is dependent on the GNU Scientific Library (https://www.gnu.org/software/gsl/).
