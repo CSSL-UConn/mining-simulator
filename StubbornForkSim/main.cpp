@@ -62,7 +62,7 @@ int main(int argc, const char *argv[]) {
     
     //#########################################################################################
     //idea of simulation: 2 miners, only an honest, and a stubborn fork miner. Run many games, with the
-    //size of the two changing. Plot the expected profit vs. actual profit. (reproduce fig 2 in selfish paper)
+    //size of the two changing. Plot the expected profit vs. actual profit. 
     GAMEINFO("#####\nRunning Stubborn Fork Mining Simulation\n#####" << std::endl);
     std::ofstream plot;
     char  filename[1024] = {0};
@@ -131,7 +131,7 @@ int main(int argc, const char *argv[]) {
         auto fractionOfProfits = valuePercentage(minerResults[0].totalProfit, result.moneyInLongestChain);
         auto honestFractionOfProfits = valuePercentage(minerResults[1].totalProfit, result.moneyInLongestChain);
 
-        GAMEINFO("Gamma" << "Fraction earned by stubborn trail:" << fractionOfProfits << " with " << attackerPower << " fraction of hash power" << "Fraction by honest: " << honestFractionOfProfits << std::endl);
+        GAMEINFO("Gamma" << "Fraction earned by stubborn fork:" << fractionOfProfits << " with " << attackerPower << " fraction of hash power" << "Fraction by honest: " << honestFractionOfProfits << std::endl);
         plot << gammaVal << ", " << fractionOfProfits<< ", " << attackerPower << ", " << honestFractionOfProfits  << std::endl;
         
         }

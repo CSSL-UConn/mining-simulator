@@ -62,8 +62,8 @@ int main(int argc, const char *argv[]) {
     int numberOfGames = 100;
     
     //#########################################################################################
-    //idea of simulation: 2 miners, only an honest, and a selfish miner. Run many games, with the
-    //size of the two changing. Plot the expected profit vs. actual profit. (reproduce fig 2 in selfish paper)
+    //idea of simulation: 3 miners, an honest miner, a rational miner, and a selfish miner running some mining strategy. Run many games, with the
+    //size of the two changing. Plot the expected profit vs. actual profit. 
     GAMEINFO("#####\nRunning Selfish Mining Simulation\n#####" << std::endl);
     std::ofstream plot;
     char  filename[1024] = {0};
@@ -94,13 +94,14 @@ int main(int argc, const char *argv[]) {
         std::function<Value(const Blockchain &, Value)> forkFunc(std::bind(functionForkPercentage, _1, _2, 2));
 
         auto rationalStrat = createRationalStrategy(NOISE_IN_TRANSACTIONS);
-        auto defaultStrat = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
-        auto strat = createStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, 2);
+        auto defaultStrat = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
+        auto strat = createSelfishStrategy(NOISE_IN_TRANSACTIONS);
 
 
 
         MinerParameters selfishMinerParams = {0, std::to_string(0), selfishPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
-        MinerParameters defaultinerParams = {2, std::to_string(2), honestPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};MinerParameters rationalParams = {2, std::to_string(2), rationalPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
+        MinerParameters defaultinerParams = {2, std::to_string(2), honestPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
+        MinerParameters rationalParams = {2, std::to_string(2), rationalPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
 
         miners.push_back(std::make_unique<Miner>(selfishMinerParams, *strat));
         miners.push_back(std::make_unique<Miner>(rationalParams, *rationalStrat));  

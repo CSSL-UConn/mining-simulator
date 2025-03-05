@@ -62,8 +62,8 @@ int main(int argc, const char *argv[]) {
     int numberOfGames = 100;
     
     //#########################################################################################
-    //idea of simulation: 2 miners, only an honest, and a selfish miner. Run many games, with the
-    //size of the two changing. Plot the expected profit vs. actual profit. (reproduce fig 2 in selfish paper)
+    //idea of simulation: 3 miners, an honest, and 2 selfish miners. Run many games, with the
+    //size of the two changing. Plot the expected profit vs. actual profit. 
     GAMEINFO("#####\nRunning Selfish Mining Simulation\n#####" << std::endl);
     std::ofstream plot;
     char  filename[1024] = {0};
@@ -73,7 +73,7 @@ int main(int argc, const char *argv[]) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return 1;
     }
-    plot << "Gamma, Selfish Profit 1, Selfish Profit 2,  Individual Miner Hash Rate, Honest Profit" << std::endl;
+    plot << "Gamma, Selfish (Strat 1) Profit, Selfish (Strat 2) Profit,  Individual Miner Hash Rate, Honest Profit" << std::endl;
     //start running games
 
     for(double gammaVal = 000; gammaVal < 1.01; gammaVal+=.50) {
@@ -94,7 +94,7 @@ int main(int argc, const char *argv[]) {
         std::function<Value(const Blockchain &, Value)> forkFunc(std::bind(functionForkPercentage, _1, _2, 2));
 
         auto defaultStrat = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
-        auto publishStrat = createStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, 2);
+        auto publishStrat = createSelfishStrategy(NOISE_IN_TRANSACTIONS);
         auto publishStrat2 = createSelfishStrategy(NOISE_IN_TRANSACTIONS);
 
 
@@ -136,7 +136,7 @@ int main(int argc, const char *argv[]) {
         auto fractionOfProfits = valuePercentage(minerResults[0].totalProfit, result.moneyInLongestChain);
         auto fractionOfProfits2 = valuePercentage(minerResults[1].totalProfit, result.moneyInLongestChain);
         auto honestFractionOfProfits = valuePercentage(minerResults[2].totalProfit, result.moneyInLongestChain);
-        GAMEINFO("Gamma" << "Fraction earned by selfish miner:" << fractionOfProfits << " with " << selfishPower << " fraction of hash power" << "Fraction by second miner:" << fractionOfProfits2 <<  "Fraction by honest: " << honestFractionOfProfits << std::endl);
+        GAMEINFO("Gamma" << "Fraction earned by first selfish miner:" << fractionOfProfits << " with " << selfishPower << " fraction of hash power" << "Fraction by second selfish miner:" << fractionOfProfits2 <<  "Fraction by honest: " << honestFractionOfProfits << std::endl);
         plot << gammaVal << ", " << fractionOfProfits<< ", " << fractionOfProfits2 << ", " << selfishPower1 << ", " << honestFractionOfProfits << std::endl;
          
         }

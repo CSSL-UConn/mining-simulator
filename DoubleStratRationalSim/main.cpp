@@ -62,8 +62,8 @@ int main(int argc, const char *argv[]) {
     int numberOfGames = 100;
     
     //#########################################################################################
-    //idea of simulation: 2 miners, only an honest, and a selfish miner. Run many games, with the
-    //size of the two changing. Plot the expected profit vs. actual profit. (reproduce fig 2 in selfish paper)
+    //idea of simulation: 4 miners, an honest, an honest-but-rational and 2 selfish miners running some strategy. Run many games, with the
+    //size of the two changing. Plot the expected profit vs. actual profit. 
     GAMEINFO("#####\nRunning Selfish Mining Simulation\n#####" << std::endl);
     std::ofstream plot;
     char  filename[1024] = {0};
@@ -96,8 +96,8 @@ int main(int argc, const char *argv[]) {
 
         auto rationalStrat = createRationalStrategy(NOISE_IN_TRANSACTIONS);
         auto defaultStrat = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
-        auto strat2 =  createStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, 1);
-        auto strat1 =  createIncentiveStubbornTrailStrategy(NOISE_IN_TRANSACTIONS,1,0.5,1);
+        auto strat2 =  createSelfishStrategy(NOISE_IN_TRANSACTIONS);
+        auto strat1 =  createSelfishStrategy(NOISE_IN_TRANSACTIONS);
 
 
         MinerParameters selfishMinerParams1 = {0, std::to_string(0), selfishPower1, NETWORK_DELAY, COST_PER_SEC_TO_MINE};

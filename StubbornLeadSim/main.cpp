@@ -58,8 +58,8 @@ int main(int argc, const char *argv[]) {
     
     //#########################################################################################
     //idea of simulation: 2 miners, only an honest, and a selfish miner running a stubborn lead strategy. Run many games, with the
-    //size of the two changing. Plot the expected profit vs. actual profit. (reproduce fig 2 in selfish paper)
-    GAMEINFO("#####\nRunning Stubborn Fork Mining Simulation\n#####" << std::endl);
+    //size of the two changing. Plot the expected profit vs. actual profit. 
+    GAMEINFO("#####\nRunning Stubborn Lead Mining Simulation\n#####" << std::endl);
     std::ofstream plot;
     char  filename[1024] = {0};
     sprintf(filename, "%s_%s.txt", argv[0], argv[1]);
