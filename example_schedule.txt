@@ -1,0 +1,19 @@
+# Strategy Schedule File
+# Format: miner_id, start_block, end_block, strategy_name
+#
+# Available strategies:
+#   - default, honest
+#   - selfish, default-selfish, clever-selfish
+#   - stubborn-trail, stubborn-trail-2, stubborn-trail-3, stubborn-trail-4
+#   - stubborn-fork, stubborn-lead, stubborn-lead-fork
+#   - stubborn-lead-trail, stubborn-trail-fork, stubborn-lead-trail-fork
+#   - petty, lazy-fork, gap, rational
+#   - publish-3, publish-4
+
+# Miner 0: selfish from blocks 0-19, stubborn-trail from 20-49, default from 50-99
+0, 0, 19, selfish
+0, 20, 49, stubborn-trail
+0, 50, 99, petty
+
+# Miner 1: Stay default for entire simulation
+1, 0, 99, default

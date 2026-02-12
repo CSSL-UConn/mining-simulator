@@ -79,7 +79,7 @@ public:
     
     Value gap(BlockHeight i) const;
     Value rem(const Block &block) const;
-    void sub(Value feeToRemove) const;
+    Value sub(Value feeToRemove) const;
     
     Block &most(BlockHeight age, const Miner &miner) const;
     Block &oldest(BlockHeight age, const Miner &miner) const;

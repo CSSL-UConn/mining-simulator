@@ -14,6 +14,7 @@
 #include "rational_miner.hpp"
 #include "function_fork_miner.hpp"
 #include "selfish_miner.hpp"
+#include "clever_selfish_miner.hpp"
 
 
 

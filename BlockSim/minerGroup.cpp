@@ -12,6 +12,7 @@
 #include "blockchain.hpp"
 #include "block.hpp"
 #include "logging.h"
+#include "miner_result.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -149,4 +150,21 @@ void MinerGroup::resetOrder() {
             sleepingPublishers.insert(miner.get());
         }
     }
+}
+
+Miner& MinerGroup::getMiner(size_t index) {
+    assert(index < miners.size());
+    return *miners[index];
+}
+
+const Miner& MinerGroup::getMiner(size_t index) const {
+    assert(index < miners.size());
+    return *miners[index];
+}
+
+Miner* MinerGroup::nextMiner() {
+    if (miningQueue.empty()) {
+        return nullptr;
+    }
+    return miningQueue.front();
 }

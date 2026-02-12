@@ -214,8 +214,8 @@ Value Blockchain::rem(const Block &block) const {
     return valueNetworkTotal - block.txFeesInChain + block.tip;
 }
 
-void Blockchain::sub(const Value feeToDelete) const {
-    valueNetworkTotal - feeToDelete;
+Value Blockchain::sub(const Value feeToDelete) const {
+    return valueNetworkTotal - feeToDelete;
 }
 
 const std::vector<const Block *> Blockchain::getHeads() const {

@@ -1,0 +1,11 @@
+BlockHeight, Miner0_Strategy, Miner0_CumulativeProfit, Miner0_CumulativeBlocks, Miner1_Strategy, Miner1_CumulativeProfit, Miner1_CumulativeBlocks
+10, selfish, 6504165626, 2, default, 22699996368, 9
+20, selfish, 13008331252, 4, default, 45399992736, 18
+30, stubborn-trail, 19512496878, 6, default, 68099989104, 27
+40, stubborn-trail, 26016662504, 8, default, 90799985472, 36
+50, stubborn-trail, 32520828130, 10, default, 113499981840, 45
+60, petty, 39024993756, 12, default, 136199978208, 54
+70, petty, 45529159382, 14, default, 158899974576, 63
+80, petty, 52033325008, 16, default, 181599970944, 72
+90, petty, 58537490634, 18, default, 204299967312, 81
+100, petty, 65041656260, 20, default, 226999963680, 90

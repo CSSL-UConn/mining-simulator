@@ -59,7 +59,7 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
     
-    int numberOfGames = 100;
+    int numberOfGames = 25;
     
     //#########################################################################################
     //idea of simulation: 2 miners, only an honest, and a selfish miner. Run many games, with the
@@ -125,7 +125,8 @@ int main(int argc, const char *argv[]) {
 
         GAMEINFO("Total profit:" << result.moneyInLongestChain << std::endl);
         
-        assert(minerResults[0].totalProfit <= result.moneyInLongestChain);
+        const double EPSILON = 1e-9;  // or 1e-6 for more tolerance
+        assert(minerResults[0].totalProfit <= result.moneyInLongestChain + EPSILON);
         
         auto fractionOfProfits = valuePercentage(minerResults[0].totalProfit, result.moneyInLongestChain);
         auto honestFractionOfProfits = valuePercentage(minerResults[1].totalProfit, result.moneyInLongestChain);

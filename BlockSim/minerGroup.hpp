@@ -46,6 +46,14 @@ public:
     void nextBroadcastRound(Blockchain &blockchain);
     
     void resetOrder();
+    
+    // Access individual miners
+    Miner& getMiner(size_t index);
+    const Miner& getMiner(size_t index) const;
+    size_t size() const { return miners.size(); }
+    
+    // Get next miner in queue
+    Miner* nextMiner();
 };
 
 #endif /* MinerGroup_hpp */

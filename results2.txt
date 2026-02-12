@@ -1,0 +1,11 @@
+BlockHeight, Miner0_Strategy, Miner0_CumulativeProfit, Miner0_CumulativeBlocks, Miner1_Strategy, Miner1_CumulativeProfit, Miner1_CumulativeBlocks
+10, default, 10858331596, 4, default, 15437497530, 8
+20, default, 21716663192, 8, default, 30874995060, 16
+30, default, 32574994788, 12, default, 46312492590, 24
+40, default, 43433326384, 16, default, 61749990120, 32
+50, default, 54291657980, 20, default, 77187487650, 40
+60, default, 65149989576, 24, default, 92624985180, 48
+70, default, 76008321172, 28, default, 108062482710, 56
+80, default, 86866652768, 32, default, 123499980240, 64
+90, default, 97724984364, 36, default, 138937477770, 72
+100, default, 108583315960, 40, default, 154374975300, 80
