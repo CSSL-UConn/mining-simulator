@@ -1,19 +1,14 @@
-# Strategy Schedule File
+# Strategy Schedule File for Dynamic Switching Tests
 # Format: miner_id, start_block, end_block, strategy_name
 #
-# Available strategies:
-#   - default, honest
-#   - selfish, default-selfish, clever-selfish
-#   - stubborn-trail, stubborn-trail-2, stubborn-trail-3, stubborn-trail-4
-#   - stubborn-fork, stubborn-lead, stubborn-lead-fork
-#   - stubborn-lead-trail, stubborn-trail-fork, stubborn-lead-trail-fork
-#   - petty, lazy-fork, gap, rational
-#   - publish-3, publish-4
+# This schedule is for 20,000 block simulations
+# Miner 0 switches strategies dynamically
+# Miner 1 uses default-selfish (gamma-aware honest miner)
 
-# Miner 0: selfish from blocks 0-19, stubborn-trail from 20-49, default from 50-99
-0, 0, 19, selfish
-0, 20, 49, stubborn-trail
-0, 50, 99, petty
+# Miner 0: Dynamic strategy switching
+0, 0, 6666, selfish
+0, 6667, 13333, stubborn-trail
+0, 13334, 19999, petty
 
-# Miner 1: Stay default for entire simulation
-1, 0, 99, default
+# Miner 1: Gamma-aware honest miner (required for selfish mining to work!)
+1, 0, 19999, default-selfish
