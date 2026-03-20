@@ -8,7 +8,8 @@
 # Miner 0: Dynamic strategy switching
 0, 0, 6666, selfish
 0, 6667, 13333, stubborn-trail
-0, 13334, 19999, petty
+0, 13334, 19999, selfish
 
 # Miner 1: Gamma-aware honest miner (required for selfish mining to work!)
-1, 0, 19999, default-selfish
+2, 0, 9999, default-selfish 0.6
+2, 10000, 19999, default-selfish, 0.6

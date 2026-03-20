@@ -50,9 +50,9 @@ bool StrategyScheduler::loadFromFile(const std::string& filename) {
             tokens.push_back(token);
         }
         
-        if (tokens.size() != 4) {
+        if (tokens.size() > 5) {
             std::cerr << "Warning: Invalid format at line " << lineNumber 
-                      << " (expected: miner_id, start_block, end_block, strategy_name)" << std::endl;
+                      << " (expected: miner_id, start_block, end_block, strategy_name, gamma (optional))" << std::endl;
             continue;
         }
         
@@ -61,8 +61,14 @@ bool StrategyScheduler::loadFromFile(const std::string& filename) {
             BlockHeight startBlock = BlockHeight(std::stoi(tokens[1]));
             BlockHeight endBlock = BlockHeight(std::stoi(tokens[2]));
             std::string strategyName = tokens[3];
+
+            //Handle optional gamma
+            double gamma = -1.0;
+            if (!tokens[4].empty()) {
+                gamma = std::stod(tokens[4]);
+            }
             
-            StrategyChange change(minerId, startBlock, endBlock, strategyName);
+            StrategyChange change(minerId, startBlock, endBlock, strategyName, gamma);
             schedule.push_back(change);
             minerSchedules[minerId].push_back(change);
             
@@ -90,6 +96,18 @@ bool StrategyScheduler::loadFromFile(const std::string& filename) {
     
     return true;
 }
+
+
+double StrategyScheduler::getConnectivityAtHeight(BlockHeight height) const {
+    // Find honest mining connectivity at block height
+    for (const auto& change : schedule) {
+        if (rawHeight(change.startBlock) == rawHeight(height) && change.gamma >= 0 && change.strategyName == "default-selfish") {
+            return change.gamma;
+        }
+    }
+    return -1.0;
+}
+
 
 std::vector<StrategyChange> StrategyScheduler::getChangesAtHeight(BlockHeight height) const {
     std::vector<StrategyChange> changes;

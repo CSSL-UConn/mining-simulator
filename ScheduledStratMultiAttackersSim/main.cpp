@@ -79,17 +79,18 @@ int main(int argc, const char *argv[]) {
     
     output << "# Dynamic Strategy Switching Simulation Results" << std::endl;
     output << "# Schedule file: " << scheduleFile << std::endl;
-    output << "Miner0_ProfitFraction, Miner0_HashRate, Miner1_HashRate, Miner0_BlockFraction" << std::endl;
+    output << "Gamma, Miner0_ProfitFraction, Miner1_ProfitFraction Miner0/1_HashRate, Miner2_HashRate, Miner0_BlockFraction, Miner1_BlockFraction" << std::endl;
 
     
-    for (double gammaVal = 0.4; gammaVal < .81; gammaVal += 1.1) {
+    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += 0.25) {
         
         std::cout << "\n=== Testing with Gamma = " << gammaVal << " ===" << std::endl;
         
-        for (double hashVal = 0.1; hashVal < 0.51; hashVal += 0.05) {
+        for (double hashVal = 0.2; hashVal < 0.61; hashVal += 0.05) {
             
-            HashRate miner0Power = HashRate(hashVal);
-            HashRate miner1Power = HashRate(1.0 - hashVal);
+            HashRate miner0Power = HashRate(hashVal/2);
+            HashRate miner1Power = HashRate(hashVal/2);
+            HashRate miner2Power = HashRate(1-hashVal);
             
             if (((int)(hashVal * 1000)) % 50 == 0) {
                 std::cout << "  Testing hash rate: " << (hashVal * 100) << "%" << std::endl;
@@ -98,7 +99,7 @@ int main(int argc, const char *argv[]) {
             for (int gameNum = 1; gameNum <= numberOfGames; gameNum++) {
                 
                 GAMEINFO("\nGame #" << gameNum << " | Gamma=" << gammaVal 
-                         << " | Miner0=" << miner0Power << std::endl);
+                         << " | Miner0=" << miner0Power << " | Miner1=" << miner1Power<< " | Miner2=" << miner2Power << std::endl);
                 
                 std::map<std::string, std::unique_ptr<Strategy>> strategyPool;
                 std::vector<std::string> strategyNames = {
@@ -114,15 +115,20 @@ int main(int argc, const char *argv[]) {
                 
                 std::string miner0Strategy = scheduler.getActiveStrategy(0, BlockHeight(0));
                 std::string miner1Strategy = scheduler.getActiveStrategy(1, BlockHeight(0));
+                std::string miner2Strategy = scheduler.getActiveStrategy(2, BlockHeight(0));
                 if (miner0Strategy.empty()) miner0Strategy = "selfish";
-                if (miner1Strategy.empty()) miner1Strategy = "default-selfish";
+                if (miner1Strategy.empty()) miner1Strategy = "selfish";
+                if (miner2Strategy.empty()) miner2Strategy = "default-selfish";
                 
                 MinerParameters miner0Params = {0, "Miner-0", miner0Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
                 MinerParameters miner1Params = {1, "Miner-1", miner1Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
+                MinerParameters miner2Params = {2, "Miner-2", miner2Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
+    
                 
                 std::vector<std::unique_ptr<Miner>> miners;
                 miners.push_back(std::make_unique<Miner>(miner0Params, *strategyPool[miner0Strategy]));
                 miners.push_back(std::make_unique<Miner>(miner1Params, *strategyPool[miner1Strategy]));
+                miners.push_back(std::make_unique<Miner>(miner2Params, *strategyPool[miner2Strategy]));
                 
                 MinerGroup minerGroup(std::move(miners));
                 
@@ -140,9 +146,11 @@ int main(int argc, const char *argv[]) {
                     
                     std::string newMiner0Strategy = scheduler.getActiveStrategy(0, currentHeight);
                     std::string newMiner1Strategy = scheduler.getActiveStrategy(1, currentHeight);
+                    std::string newMiner2Strategy = scheduler.getActiveStrategy(2, currentHeight);
                     
                     if (newMiner0Strategy.empty()) newMiner0Strategy = miner0Strategy;
                     if (newMiner1Strategy.empty()) newMiner1Strategy = miner1Strategy;
+                    if (newMiner2Strategy.empty()) newMiner2Strategy = miner2Strategy;
                     
                     bool strategyChanged = false;
                     
@@ -185,6 +193,24 @@ int main(int argc, const char *argv[]) {
                         miner1Strategy = newMiner1Strategy;
                         strategyChanged = true;
                     }
+                    if(newMiner2Strategy == "default-selfish") {
+                        double gamma = scheduler.getConnectivityAtHeight(currentHeight); 
+                        if(gamma != -1.0) {
+                            GAMEINFO("Block " << currentHeight << ": Miner 2 switching  default-selfish's gamma to " 
+                                 << gamma << std::endl);
+                            std::string key = "default-selfish-2" + std::to_string(rawHeight(currentHeight));  
+                            strategyPool[key] = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma); 
+                            minerGroup.getMiner(2).changeStrategy(*strategyPool["default-selfish"], *blockchain);
+                            miner2Strategy = newMiner2Strategy;
+                            strategyChanged = true;
+                        }
+                            
+                     } else if (newMiner2Strategy != miner2Strategy) {
+                        GAMEINFO("Block " << currentHeight << ": Miner 2 switching from " 
+                                 << miner2Strategy << " to " << newMiner2Strategy << std::endl);
+                        minerGroup.getMiner(2).changeStrategy(*strategyPool[newMiner2Strategy], *blockchain);
+                        miner2Strategy = newMiner2Strategy;
+                        strategyChanged = true;}
                     
                     if (strategyChanged) {
                         minerGroup.resetOrder();
@@ -211,8 +237,10 @@ int main(int argc, const char *argv[]) {
                 
                 BlockCount miner0Blocks(0);
                 BlockCount miner1Blocks(0);
+                BlockCount miner2Blocks(0);
                 Value miner0Profit(0);
                 Value miner1Profit(0);
+                Value miner2Profit(0);
                 
                 for (auto block : winningChain) {
                     if (block->height == BlockHeight(0)) break;
@@ -223,22 +251,32 @@ int main(int argc, const char *argv[]) {
                     } else if (block->miner == &minerGroup.getMiner(1)) {
                         miner1Blocks = BlockCount(rawCount(miner1Blocks) + 1);
                         miner1Profit = Value(rawValue(miner1Profit) + rawValue(block->value));
-                    }
+                    } else if (block->miner == &minerGroup.getMiner(2)) {
+                        miner2Blocks = BlockCount(rawCount(miner2Blocks) + 2);
+                        miner2Profit = Value(rawValue(miner2Profit) + rawValue(block->value));
+                    } 
                 }
                 
-                Value totalProfit = Value(rawValue(miner0Profit) + rawValue(miner1Profit));
-                BlockCount totalBlocks = BlockCount(rawCount(miner0Blocks) + rawCount(miner1Blocks));
+                Value totalProfit = Value(rawValue(miner0Profit) + rawValue(miner1Profit) + rawValue(miner2Profit));
+                BlockCount totalBlocks = BlockCount(rawCount(miner0Blocks) + rawCount(miner1Blocks) + rawValue(miner2Blocks));
                 
-                double profitFraction = (rawValue(totalProfit) > 0) ? 
+                double profitFraction0 = (rawValue(totalProfit) > 0) ? 
                     (double)rawValue(miner0Profit) / (double)rawValue(totalProfit) : 0.0;
-                double blockFraction = (rawCount(totalBlocks) > 0) ? 
+                double blockFraction0 = (rawCount(totalBlocks) > 0) ? 
                     (double)rawCount(miner0Blocks) / (double)rawCount(totalBlocks) : 0.0;
+
+                double profitFraction1 = (rawValue(totalProfit) > 0) ? 
+                    (double)rawValue(miner1Profit) / (double)rawValue(totalProfit) : 0.0;
+                double blockFraction1 = (rawCount(totalBlocks) > 0) ? 
+                    (double)rawCount(miner1Blocks) / (double)rawCount(totalBlocks) : 0.0;
                 
-                GAMEINFO("Game complete: Miner0 profit fraction=" << profitFraction 
-                         << ", block fraction=" << blockFraction << std::endl);
-                
-                output << profitFraction << ", " << hashVal << ", " 
-                       << (1.0 - hashVal) << ", " << blockFraction << std::endl;
+                GAMEINFO("Game complete: Miner0 profit fraction=" << profitFraction0 
+                         << ", block fraction=" << blockFraction0 << std::endl);
+               
+                GAMEINFO("Game complete: Miner1 profit fraction=" << profitFraction1 
+                         << ", block fraction=" << blockFraction1 << std::endl);
+                output << gammaVal << "," << profitFraction0 << "," << profitFraction1 << ", "<< hashVal/2 << ", " 
+                       << (1.0 - hashVal) << ", " << blockFraction0 << ", " << blockFraction1 << std::endl;
             }
         }
     }

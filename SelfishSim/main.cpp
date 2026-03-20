@@ -94,6 +94,7 @@ int main(int argc, const char *argv[]) {
 
         auto defaultStrat = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
         auto selfishStrat = createSelfishStrategy(NOISE_IN_TRANSACTIONS);
+        auto forkStrat1 = createStubbornLeadStrategy(NOISE_IN_TRANSACTIONS); 
 
         MinerParameters selfishMinerParams = {0, std::to_string(0), selfishPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
         MinerParameters defaultinerParams = {1, std::to_string(1), honestPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
@@ -110,6 +111,7 @@ int main(int argc, const char *argv[]) {
         BlockchainSettings blockchainSettings = {SEC_PER_BLOCK, A, B, EXPECTED_NUMBER_OF_BLOCKS};
         GameSettings settings = {blockchainSettings};
         
+        GAMEINFO("Miner 0" << minerGroup.getMiner(0));
         
         auto blockchain = std::make_unique<Blockchain>(settings.blockchainSettings);
         minerGroup.reset(*blockchain);

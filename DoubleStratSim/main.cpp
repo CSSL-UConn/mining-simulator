@@ -111,7 +111,8 @@ int main(int argc, const char *argv[]) {
         MinerGroup minerGroup(std::move(miners));
         
         GAMEINFO("\n\nGame#: " << gameNum << " The board is set, the pieces are in motion..." << std::endl);
-        GAMEINFO("miner ratio:" << selfishPower << " selfish." << std::endl);
+        GAMEINFO("miner ratio:" << selfishPower1 << " selfish 1." << std::endl);
+        GAMEINFO("miner ratio:" << selfishPower2 << " selfish 2." << std::endl);
         
         BlockchainSettings blockchainSettings = {SEC_PER_BLOCK, A, B, EXPECTED_NUMBER_OF_BLOCKS};
         GameSettings settings = {blockchainSettings};

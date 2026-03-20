@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <optional>
 
 class Strategy;
 
@@ -21,9 +22,10 @@ struct StrategyChange {
     BlockHeight startBlock;
     BlockHeight endBlock;
     std::string strategyName;
+    double gamma;
     
-    StrategyChange(unsigned int id, BlockHeight start, BlockHeight end, std::string name)
-        : minerId(id), startBlock(start), endBlock(end), strategyName(name) {}
+    StrategyChange(unsigned int id, BlockHeight start, BlockHeight end, std::string name, double connectivity)
+        : minerId(id), startBlock(start), endBlock(end), strategyName(name), gamma(connectivity) {}
     
     // Check if this change contains a specific block height
     bool contains(BlockHeight height) const {
@@ -52,6 +54,8 @@ public:
     // Get all strategy changes that should occur at this block height
     std::vector<StrategyChange> getChangesAtHeight(BlockHeight height) const;
     
+    double getConnectivityAtHeight(BlockHeight height) const;
+
     // Get the active strategy for a miner at a given height
     std::string getActiveStrategy(unsigned int minerId, BlockHeight height) const;
     
