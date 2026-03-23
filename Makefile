@@ -65,6 +65,17 @@ stubborn-lead-trail-fork: StubbornLeadTrailForkSim/main.cpp $(OBJS)
 rational: SingleStratRationalSim/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL) $(LDLIBS)
 
+ttp-selfish: TTP_Sim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL) $(LDLIBS)
+
+ttp-scheduler: TTP_Scheduled_Sim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL) $(LDLIBS)
+
+ttp-multi: TTP_Multi_Sim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL) $(LDLIBS)
+
+ttp-multi-scheduler: TTP_Multi_Scheduled_Sim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL) $(LDLIBS)
 
 # Incentivzed
 incentive-selfish: IncentiveSelfishSim/main.cpp $(OBJS)

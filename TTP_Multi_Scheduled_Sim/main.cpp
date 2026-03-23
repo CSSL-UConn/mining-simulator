@@ -1,9 +1,9 @@
 //
 //  main.cpp
-//  ScheduledStratMultiAttackersSim
+//  TTP_ScheduledStratMultiAttackersSim
 //
-//  Simulation with continuous blockchain and dynamic strategy changes
-//  Structured like SelfishSim for statistical testing
+//  Simulation with continuous blockchain, dynamic strategy changes,
+//  multiple attackers, and per-DAP per-attacker revenue advantage tracking.
 //
 
 #include "BlockSim/strategy.hpp"
@@ -20,6 +20,7 @@
 #include "BlockSim/mining_style.hpp"
 #include "BlockSim/strategy_scheduler.hpp"
 #include "BlockSim/strategy_factory.hpp"
+#include "BlockSim/dap_tracker.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -34,12 +35,13 @@
 #define NOISE_IN_TRANSACTIONS false
 #define NETWORK_DELAY BlockTime(0)
 
-#define B BlockValue(0)
+#define B BlockValue(Value(22) * SATOSHI_PER_BITCOIN)
 #define TOTAL_BLOCK_VALUE BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
 #define SEC_PER_BLOCK BlockRate(600)
 #define A (TOTAL_BLOCK_VALUE - B)/SEC_PER_BLOCK
 
 #define EXPECTED_NUMBER_OF_BLOCKS BlockCount(20000)
+#define DAP_LENGTH 2016
 
 int main(int argc, const char *argv[]) {
     
@@ -47,17 +49,16 @@ int main(int argc, const char *argv[]) {
         std::cerr << "Usage: " << argv[0] << " <strategy_schedule_file> [output_file]" << std::endl;
         std::cerr << "\nStrategy schedule file format:" << std::endl;
         std::cerr << "  miner_id, start_block, end_block, strategy_name" << std::endl;
-        std::cerr << "\nThis runs multiple games testing different gamma values and hash rates" << std::endl;
-        std::cerr << "with dynamic strategy switching (continuous blockchain per game)." << std::endl;
         std::cerr << "\nSchedule example:" << std::endl;
         std::cerr << "  0, 0, 9999, selfish" << std::endl;
         std::cerr << "  0, 10000, 19999, stubborn-trail" << std::endl;
-        std::cerr << "  1, 0, 19999, default-selfish" << std::endl;
+        std::cerr << "  1, 0, 19999, selfish" << std::endl;
+        std::cerr << "  2, 0, 19999, default-selfish" << std::endl;
         return 1;
     }
     
     std::string scheduleFile = argv[1];
-    std::string outputFile = argc >= 3 ? argv[2] : "scheduled_output.txt";
+    std::string outputFile = argc >= 3 ? argv[2] : "scheduled_multi_output.txt";
     
     int numberOfGames = 25;
     
@@ -67,39 +68,61 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
     
-    std::cout << "Successfully loaded schedule with " << scheduler.getScheduleSize() << " strategy changes" << std::endl;
+    std::cout << "Successfully loaded schedule with " << scheduler.getScheduleSize() 
+              << " strategy changes" << std::endl;
     
-    GAMEINFO("\n#####\nRunning Dynamic Strategy Switching Simulation\n#####\n" << std::endl);
+    GAMEINFO("\n#####\nRunning Multi-Attacker Dynamic Strategy Switching Simulation with TTP\n#####\n" << std::endl);
     
+    // Output file 1: per-game summary
     std::ofstream output(outputFile);
     if (!output.is_open()) {
         std::cerr << "Error opening output file: " << outputFile << std::endl;
         return 1;
     }
     
-    output << "# Dynamic Strategy Switching Simulation Results" << std::endl;
+    output << "# Multi-Attacker Dynamic Strategy Switching Simulation Results" << std::endl;
     output << "# Schedule file: " << scheduleFile << std::endl;
-    output << "Gamma, Miner0_ProfitFraction, Miner1_ProfitFraction Miner0/1_HashRate, Miner2_HashRate, Miner0_BlockFraction, Miner1_BlockFraction" << std::endl;
+    output << "Gamma, Miner0_ProfitFraction, Miner1_ProfitFraction, Miner0/1_HashRate, "
+           << "Miner2_HashRate, Miner0_BlockFraction, Miner1_BlockFraction, "
+           << "Miner0_Final_CumRA, Miner1_Final_CumRA, Num_DAPs"
+           << std::endl;
+           
+    // Output file 2: per-DAP per-attacker revenue advantage curves
+    std::string dapFilename = outputFile + "_dap_detail.csv";
+    std::ofstream dapDetail(dapFilename);
+    if (!dapDetail.is_open()) {
+        std::cerr << "Error opening DAP detail file: " << dapFilename << std::endl;
+        return 1;
+    }
+    dapDetail << "gamma,combined_hash_rate,game_num,"
+              << "dap,attacker_id,attacker_name,attacker_alpha,"
+              << "start_height,end_height,start_time,end_time,"
+              << "atk_blocks,total_blocks,"
+              << "atk_revenue,honest_counterfactual_revenue,revenue_advantage,"
+              << "cumulative_atk_revenue,cumulative_honest_revenue,cumulative_revenue_advantage,"
+              << "rrr,seconds_per_block"
+              << std::endl;
 
-    
-    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += 0.25) {
+    for (double gammaVal = 0.5; gammaVal < 1.01; gammaVal += 1.25) {
         
         std::cout << "\n=== Testing with Gamma = " << gammaVal << " ===" << std::endl;
         
-        for (double hashVal = 0.2; hashVal < 0.61; hashVal += 0.05) {
+        for (double hashVal = 0.4; hashVal < 0.61; hashVal += 1.05) {
             
-            HashRate miner0Power = HashRate(hashVal/2);
-            HashRate miner1Power = HashRate(hashVal/2);
-            HashRate miner2Power = HashRate(1-hashVal);
+            HashRate miner0Power = HashRate(hashVal / 2);
+            HashRate miner1Power = HashRate(hashVal / 2);
+            HashRate miner2Power = HashRate(1 - hashVal);
             
             if (((int)(hashVal * 1000)) % 50 == 0) {
-                std::cout << "  Testing hash rate: " << (hashVal * 100) << "%" << std::endl;
+                std::cout << "  Testing combined hash rate: " << (hashVal * 100) << "%" << std::endl;
             }
             
             for (int gameNum = 1; gameNum <= numberOfGames; gameNum++) {
                 
                 GAMEINFO("\nGame #" << gameNum << " | Gamma=" << gammaVal 
-                         << " | Miner0=" << miner0Power << " | Miner1=" << miner1Power<< " | Miner2=" << miner2Power << std::endl);
+                         << " | Miner0=" << miner0Power 
+                         << " | Miner1=" << miner1Power 
+                         << " | Miner2=" << miner2Power << std::endl);
                 
                 std::map<std::string, std::unique_ptr<Strategy>> strategyPool;
                 std::vector<std::string> strategyNames = {
@@ -113,6 +136,7 @@ int main(int argc, const char *argv[]) {
                     strategyPool[name] = createStrategyByName(name, false, NOISE_IN_TRANSACTIONS, gammaVal);
                 }
                 
+                // Miner setup
                 std::string miner0Strategy = scheduler.getActiveStrategy(0, BlockHeight(0));
                 std::string miner1Strategy = scheduler.getActiveStrategy(1, BlockHeight(0));
                 std::string miner2Strategy = scheduler.getActiveStrategy(2, BlockHeight(0));
@@ -123,7 +147,6 @@ int main(int argc, const char *argv[]) {
                 MinerParameters miner0Params = {0, "Miner-0", miner0Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
                 MinerParameters miner1Params = {1, "Miner-1", miner1Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
                 MinerParameters miner2Params = {2, "Miner-2", miner2Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
-    
                 
                 std::vector<std::unique_ptr<Miner>> miners;
                 miners.push_back(std::make_unique<Miner>(miner0Params, *strategyPool[miner0Strategy]));
@@ -136,10 +159,23 @@ int main(int argc, const char *argv[]) {
                 auto blockchain = std::make_unique<Blockchain>(blockchainSettings);
                 minerGroup.reset(*blockchain);
                 minerGroup.resetOrder();
-                
+
+                // DAPTracker: miners 0 and 1 are attackers
+                std::vector<AttackerInfo> attackers;
+                attackers.emplace_back(0, hashVal / 2.0, "Miner-0");
+                attackers.emplace_back(1, hashVal / 2.0, "Miner-1");
+
+                DAPTracker dapTracker(
+                    DAP_LENGTH,
+                    minerGroup.miners.size(),
+                    attackers,
+                    static_cast<double>(rawValue(blockchainSettings.blockReward)),
+                    static_cast<double>(rawRate(blockchainSettings.transactionFeeRate))
+                );
+                dapTracker.reset(blockchainSettings.secondsPerBlock);
+
                 BlockTime totalSeconds = EXPECTED_NUMBER_OF_BLOCKS * SEC_PER_BLOCK;
 
-                
                 while (blockchain->getTime() < totalSeconds) {
 
                     BlockHeight currentHeight = blockchain->getMaxHeightPub();
@@ -154,11 +190,11 @@ int main(int argc, const char *argv[]) {
                     
                     bool strategyChanged = false;
                     
-                    
+                    // Miner 0
                     if(newMiner0Strategy == "default-selfish") {
                         double gamma = scheduler.getConnectivityAtHeight(currentHeight); 
                         if(gamma != -1.0) {
-                            GAMEINFO("Block " << currentHeight << ": Miner 0 switching  default-selfish's gamma to " 
+                            GAMEINFO("Block " << currentHeight << ": Miner 0 switching default-selfish's gamma to " 
                                  << gamma << std::endl);
                             std::string key = "default-selfish-0" + std::to_string(rawHeight(currentHeight));  
                             strategyPool[key] = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma); 
@@ -166,18 +202,19 @@ int main(int argc, const char *argv[]) {
                             miner0Strategy = newMiner0Strategy;
                             strategyChanged = true;
                         }
-                            
-                     } else if (newMiner0Strategy != miner0Strategy) {
+                    } else if (newMiner0Strategy != miner0Strategy) {
                         GAMEINFO("Block " << currentHeight << ": Miner 0 switching from " 
                                  << miner0Strategy << " to " << newMiner0Strategy << std::endl);
                         minerGroup.getMiner(0).changeStrategy(*strategyPool[newMiner0Strategy], *blockchain);
                         miner0Strategy = newMiner0Strategy;
-                        strategyChanged = true;}
+                        strategyChanged = true;
+                    }
                   
+                    // Miner 1
                     if(newMiner1Strategy == "default-selfish") {
                         double gamma = scheduler.getConnectivityAtHeight(currentHeight);
                         if (gamma != -1.0) {
-                            GAMEINFO("Block " << currentHeight << ": Miner 1 switching  default-selfish's gamma to " 
+                            GAMEINFO("Block " << currentHeight << ": Miner 1 switching default-selfish's gamma to " 
                                  << gamma << std::endl);
                             std::string key = "default-selfish-1" + std::to_string(rawHeight(currentHeight)); 
                             strategyPool[key] = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma);
@@ -185,7 +222,6 @@ int main(int argc, const char *argv[]) {
                             miner1Strategy = newMiner1Strategy;
                             strategyChanged = true;
                         }
-                            
                     } else if (newMiner1Strategy != miner1Strategy) {
                         GAMEINFO("Block " << currentHeight << ": Miner 1 switching from " 
                                  << miner1Strategy << " to " << newMiner1Strategy << std::endl);
@@ -193,10 +229,12 @@ int main(int argc, const char *argv[]) {
                         miner1Strategy = newMiner1Strategy;
                         strategyChanged = true;
                     }
+
+                    // Miner 2
                     if(newMiner2Strategy == "default-selfish") {
                         double gamma = scheduler.getConnectivityAtHeight(currentHeight); 
                         if(gamma != -1.0) {
-                            GAMEINFO("Block " << currentHeight << ": Miner 2 switching  default-selfish's gamma to " 
+                            GAMEINFO("Block " << currentHeight << ": Miner 2 switching default-selfish's gamma to " 
                                  << gamma << std::endl);
                             std::string key = "default-selfish-2" + std::to_string(rawHeight(currentHeight));  
                             strategyPool[key] = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma); 
@@ -204,18 +242,19 @@ int main(int argc, const char *argv[]) {
                             miner2Strategy = newMiner2Strategy;
                             strategyChanged = true;
                         }
-                            
-                     } else if (newMiner2Strategy != miner2Strategy) {
+                    } else if (newMiner2Strategy != miner2Strategy) {
                         GAMEINFO("Block " << currentHeight << ": Miner 2 switching from " 
                                  << miner2Strategy << " to " << newMiner2Strategy << std::endl);
                         minerGroup.getMiner(2).changeStrategy(*strategyPool[newMiner2Strategy], *blockchain);
                         miner2Strategy = newMiner2Strategy;
-                        strategyChanged = true;}
+                        strategyChanged = true;
+                    }
                     
                     if (strategyChanged) {
                         minerGroup.resetOrder();
                     }
                     
+                    // --- Mine / Broadcast / Publish ---
                     BlockTime nextTime = minerGroup.nextEventTime(*blockchain);
                     blockchain->advanceToTime(nextTime);
                     
@@ -227,11 +266,13 @@ int main(int argc, const char *argv[]) {
                     COMMENTARY("Publish phase:" << std::endl);
                     
                     minerGroup.nextPublishRound(*blockchain);
+                    dapTracker.checkAndProcessDAP(*blockchain, minerGroup);
                 }
 
-                
                 minerGroup.finalize(*blockchain);
+                dapTracker.finalize(*blockchain, minerGroup);
                 
+
                 auto &winningBlock = blockchain->winningHead();
                 auto winningChain = winningBlock.getChain();
                 
@@ -272,18 +313,74 @@ int main(int argc, const char *argv[]) {
                 
                 GAMEINFO("Game complete: Miner0 profit fraction=" << profitFraction0 
                          << ", block fraction=" << blockFraction0 << std::endl);
-               
                 GAMEINFO("Game complete: Miner1 profit fraction=" << profitFraction1 
                          << ", block fraction=" << blockFraction1 << std::endl);
-                output << gammaVal << "," << profitFraction0 << "," << profitFraction1 << ", "<< hashVal/2 << ", " 
-                       << (1.0 - hashVal) << ", " << blockFraction0 << ", " << blockFraction1 << std::endl;
+                
+                // Per-game summary with per-attacker revenue advantage
+                const auto &curve = dapTracker.revenueAdvantageCurve();
+                double finalCumRA0 = 0, finalCumRA1 = 0;
+                if (!curve.empty()) {
+                    finalCumRA0 = curve.back().attackerMetrics[0].cumulativeRevenueAdvantage;
+                    finalCumRA1 = curve.back().attackerMetrics[1].cumulativeRevenueAdvantage;
+                }
+
+                output << gammaVal << ", "
+                       << profitFraction0 << ", " 
+                       << profitFraction1 << ", "
+                       << hashVal / 2.0 << ", " 
+                       << (1.0 - hashVal) << ", " 
+                       << blockFraction0 << ", " 
+                       << blockFraction1 << ", "
+                       << finalCumRA0 << ", "
+                       << finalCumRA1 << ", "
+                       << curve.size()
+                       << std::endl;
+
+                // Per-DAP per-attacker revenue advantage rows
+                const auto &history = dapTracker.history();
+                for (size_t d = 0; d < curve.size(); d++) {
+                    const auto &pt  = curve[d];
+                    const auto &dap = history[d];
+
+                    double totalBlk = rawCount(dap.totalBlocksOnChain);
+
+                    for (size_t a = 0; a < dapTracker.numAttackers(); a++) {
+                        const auto &atk = dapTracker.attackers()[a];
+                        const auto &m   = pt.attackerMetrics[a];
+
+                        dapDetail << gammaVal << ","
+                                  << hashVal << ","
+                                  << gameNum << ","
+                                  << pt.dapIndex << ","
+                                  << a << ","
+                                  << (atk.name.empty() ? std::to_string(a) : atk.name) << ","
+                                  << atk.alpha << ","
+                                  << rawHeight(dap.startHeight) << ","
+                                  << rawHeight(dap.endHeight) << ","
+                                  << rawTime(dap.startTime) << ","
+                                  << rawTime(dap.endTime) << ","
+                                  << static_cast<int>(m.atkBlocksThisDAP) << ","
+                                  << static_cast<int>(totalBlk) << ","
+                                  << m.atkRevenueThisDAP << ","
+                                  << m.honestCounterfactualThisDAP << ","
+                                  << m.revenueAdvantageThisDAP << ","
+                                  << m.cumulativeAtkRevenue << ","
+                                  << m.cumulativeHonestCounterfactual << ","
+                                  << m.cumulativeRevenueAdvantage << ","
+                                  << m.rrr << ","
+                                  << rawRate(dap.difficultyRate)
+                                  << std::endl;
+                    }
+                }
             }
         }
     }
     
     output.close();
+    dapDetail.close();
     std::cout << "\n=== Simulation Complete ===" << std::endl;
     std::cout << "Results written to: " << outputFile << std::endl;
+    std::cout << "DAP detail written to: " << dapFilename << std::endl;
     
     GAMEINFO("All games complete." << std::endl);
     
