@@ -1,0 +1,34 @@
+# Stubborn-Lead ↔ Stubborn-Trail Alternating Strategy (1000 block intervals, B5 version)
+# Format: miner_id, start_block, end_block, strategy_name
+#
+# This schedule alternates between stubborn-lead and stubborn-trail every 1000 blocks
+# These are CONTRASTING strategies:
+# - stubborn-lead: Aggressive when ahead, publishes to extend lead
+# - stubborn-trail: Defensive when behind, holds blocks to catch up
+# Use with ScheduledStratSimB5 for focused gamma (0.8-1.0) and hash rate (0.15-0.3) testing
+# Total: 20 switches over 20,000 blocks
+
+# Miner 0: Alternating stubborn-lead/stubborn-trail every 1000 blocks
+0, 0, 999, stubborn-lead
+0, 1000, 1999, stubborn-trail
+0, 2000, 2999, stubborn-lead
+0, 3000, 3999, stubborn-trail
+0, 4000, 4999, stubborn-lead
+0, 5000, 5999, stubborn-trail
+0, 6000, 6999, stubborn-lead
+0, 7000, 7999, stubborn-trail
+0, 8000, 8999, stubborn-lead
+0, 9000, 9999, stubborn-trail
+0, 10000, 10999, stubborn-lead
+0, 11000, 11999, stubborn-trail
+0, 12000, 12999, stubborn-lead
+0, 13000, 13999, stubborn-trail
+0, 14000, 14999, stubborn-lead
+0, 15000, 15999, stubborn-trail
+0, 16000, 16999, stubborn-lead
+0, 17000, 17999, stubborn-trail
+0, 18000, 18999, stubborn-lead
+0, 19000, 19999, stubborn-trail
+
+# Miner 1: Gamma-aware honest miner (required for selfish mining to work!)
+1, 0, 19999, default-selfish

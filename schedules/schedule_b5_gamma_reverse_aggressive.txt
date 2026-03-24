@@ -1,0 +1,18 @@
+# Strategy Schedule - Reverse Aggressive
+# High gamma (0.95): Use aggressive stubborn strategies (fast propagation helps)
+# Low gamma (0.8): Use simple selfish (less risk in poor connectivity)
+#
+# Theory: Good connectivity enables aggressive withholding
+
+# Miner 0: Reverse the usual pattern
+0, 2499, stubborn-lead-trail
+2500, 4999, selfish
+5000, 7499, stubborn-lead-trail
+7500, 9999, selfish
+10000, 12499, stubborn-lead-trail
+12500, 14999, selfish
+15000, 17499, stubborn-lead-trail
+17500, 19999, selfish
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

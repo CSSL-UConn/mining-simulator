@@ -1,0 +1,17 @@
+# Stubborn-Fork ↔ Stubborn-Trail-Fork Alternating Strategy (5000 block intervals)
+# Format: miner_id, start_block, end_block, strategy_name
+#
+# This schedule alternates between stubborn-fork and stubborn-trail-fork every 5000 blocks
+# Total: 4 switches over 20,000 blocks
+# Pattern: stubborn-fork → stubborn-trail-fork → stubborn-fork → stubborn-trail-fork
+#
+# Use with ScheduledStratSimB5 for focused gamma (0.8-1.0) and hash rate (0.15-0.3) testing
+
+# Miner 0: Alternating stubborn-fork/stubborn-trail-fork every 5000 blocks
+0, 0, 4999, stubborn-fork
+0, 5000, 9999, stubborn-trail-fork
+0, 10000, 14999, stubborn-fork
+0, 15000, 19999, stubborn-trail-fork
+
+# Miner 1: Gamma-aware honest miner (required for selfish mining to work!)
+1, 0, 19999, default-selfish

@@ -1,0 +1,18 @@
+# Strategy Schedule - Stubborn Family Only
+# High gamma (0.95): Stubborn-fork (simpler stubborn for good connectivity)
+# Low gamma (0.8): Stubborn-lead-trail-fork (most complex for poor connectivity)
+#
+# Theory: Staying within stubborn family minimizes switching disruption
+
+# Miner 0: Stubborn variants only
+0, 2499, stubborn-fork
+2500, 4999, stubborn-lead-trail-fork
+5000, 7499, stubborn-fork
+7500, 9999, stubborn-lead-trail-fork
+10000, 12499, stubborn-fork
+12500, 14999, stubborn-lead-trail-fork
+15000, 17499, stubborn-fork
+17500, 19999, stubborn-lead-trail-fork
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

@@ -1,0 +1,18 @@
+# Strategy Schedule - Stubborn-Lead ↔ Stubborn-Trail
+# High gamma (0.95): Stubborn-lead (aggressive when connected)
+# Low gamma (0.8): Stubborn-trail (exploits delays)
+#
+# Theory: Both stubborn strategies, optimized for different conditions
+
+# Miner 0: Stubborn variants adapted to gamma
+0, 2499, stubborn-lead
+2500, 4999, stubborn-trail
+5000, 7499, stubborn-lead
+7500, 9999, stubborn-trail
+10000, 12499, stubborn-lead
+12500, 14999, stubborn-trail
+15000, 17499, stubborn-lead
+17500, 19999, stubborn-trail
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

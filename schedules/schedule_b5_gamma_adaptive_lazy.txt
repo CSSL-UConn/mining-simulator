@@ -1,0 +1,16 @@
+# Strategy Schedule - Gamma-Adaptive with Lazy Fork
+# High gamma: selfish (standard)
+# Low gamma: lazy-fork (fork advantage in poor connectivity)
+
+# Miner 0: Adapt to gamma changes
+0, 2499, selfish
+2500, 4999, lazy-fork
+5000, 7499, selfish
+7500, 9999, lazy-fork
+10000, 12499, selfish
+12500, 14999, lazy-fork
+15000, 17499, selfish
+17500, 19999, lazy-fork
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

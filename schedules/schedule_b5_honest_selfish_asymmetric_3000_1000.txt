@@ -1,0 +1,22 @@
+# Honest ↔ Selfish Asymmetric Strategy (3000 selfish, 1000 honest, B5 version)
+# Format: miner_id, start_block, end_block, strategy_name
+#
+# This schedule favors selfish mining (75% of time) over honest (25% of time)
+# Pattern: 3000 blocks selfish, 1000 blocks honest
+# Hypothesis: If selfish is better, spending more time on it should improve results
+# Use with ScheduledStratSimB5 for focused gamma (0.8-1.0) and hash rate (0.15-0.3) testing
+
+# Miner 0: Asymmetric honest/selfish (favoring selfish 3:1)
+0, 0, 2999, selfish
+0, 3000, 3999, default
+0, 4000, 6999, selfish
+0, 7000, 7999, default
+0, 8000, 10999, selfish
+0, 11000, 11999, default
+0, 12000, 14999, selfish
+0, 15000, 15999, default
+0, 16000, 18999, selfish
+0, 19000, 19999, default
+
+# Miner 1: Gamma-aware honest miner (required for selfish mining to work!)
+1, 0, 19999, default-selfish

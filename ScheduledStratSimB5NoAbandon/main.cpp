@@ -1,9 +1,9 @@
 //
 //  main.cpp
-//  ScheduledStratSim
+//  ScheduledStratSimB5NoAbandon
 //
-//  Simulation with continuous blockchain and dynamic strategy changes
-//  Structured like SelfishSim for statistical testing
+//  Dynamic strategy switching simulation - B5 focused parameters
+//  NO CHAIN ABANDONMENT - switches happen regardless of private chain state
 //
 
 #include "BlockSim/strategy.hpp"
@@ -45,19 +45,16 @@ int main(int argc, const char *argv[]) {
     
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <strategy_schedule_file> [output_file]" << std::endl;
-        std::cerr << "\nStrategy schedule file format:" << std::endl;
-        std::cerr << "  miner_id, start_block, end_block, strategy_name" << std::endl;
-        std::cerr << "\nThis runs multiple games testing different gamma values and hash rates" << std::endl;
-        std::cerr << "with dynamic strategy switching (continuous blockchain per game)." << std::endl;
-        std::cerr << "\nSchedule example:" << std::endl;
-        std::cerr << "  0, 0, 9999, selfish" << std::endl;
-        std::cerr << "  0, 10000, 19999, stubborn-trail" << std::endl;
-        std::cerr << "  1, 0, 19999, default-selfish" << std::endl;
+        std::cerr << "\nScheduledStratSimB5NoAbandon - DEFERRED SWITCHING VERSION" << std::endl;
+        std::cerr << "Defers strategy switches until private chains are naturally published" << std::endl;
+        std::cerr << "This avoids abandoning work but may delay switches" << std::endl;
+        std::cerr << "Gamma (connectivity): 0.8 to 1.0 in 0.05 increments" << std::endl;
+        std::cerr << "Hash rate: 0.15 to 0.3 in 0.01 increments" << std::endl;
         return 1;
     }
     
     std::string scheduleFile = argv[1];
-    std::string outputFile = argc >= 3 ? argv[2] : "scheduled_output.txt";
+    std::string outputFile = argc >= 3 ? argv[2] : "scheduled_b5_no_abandon_output.txt";
     
     int numberOfGames = 25;
     
@@ -69,7 +66,9 @@ int main(int argc, const char *argv[]) {
     
     std::cout << "Successfully loaded schedule with " << scheduler.getScheduleSize() << " strategy changes" << std::endl;
     
-    GAMEINFO("\n#####\nRunning Dynamic Strategy Switching Simulation\n#####\n" << std::endl);
+    GAMEINFO("\n#####\nRunning B5 No-Abandon Dynamic Strategy Simulation\n#####\n" << std::endl);
+    GAMEINFO("Gamma range: 0.8 - 1.0 (connectivity rate)" << std::endl);
+    GAMEINFO("Hash rate range: 0.15 - 0.3 (15% - 30%)" << std::endl);
     
     std::ofstream output(outputFile);
     if (!output.is_open()) {
@@ -77,25 +76,23 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
     
-    output << "# Dynamic Strategy Switching Simulation Results" << std::endl;
+    output << "# B5 Deferred-Switch Dynamic Strategy Simulation Results" << std::endl;
+    output << "# Switches deferred until private chains are naturally published" << std::endl;
+    output << "# This avoids abandoning chains but may delay or skip switches" << std::endl;
     output << "# Schedule file: " << scheduleFile << std::endl;
-    output << "# Miner 0: selfish (0-6666), stubborn-trail (6667-13333), petty (13334-19999)" << std::endl;
-    output << "# Miner 1: default-selfish (0-19999)" << std::endl;
     output << "Gamma, Miner0_ProfitFraction, Miner0_HashRate, Miner1_HashRate, Miner0_BlockFraction" << std::endl;
 
     
-    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += 0.25) {
+    for (double gammaVal = 0.8; gammaVal < 1.01; gammaVal += 0.05) {
         
-        std::cout << "\n=== Testing with Gamma = " << gammaVal << " ===" << std::endl;
+        std::cout << "\n=== Testing with Gamma (connectivity) = " << gammaVal << " ===" << std::endl;
         
-        for (double hashVal = 0.005; hashVal < 0.51; hashVal += 0.005) {
+        for (double hashVal = 0.15; hashVal < 0.31; hashVal += 0.01) {
             
             HashRate miner0Power = HashRate(hashVal);
             HashRate miner1Power = HashRate(1.0 - hashVal);
             
-            if (((int)(hashVal * 1000)) % 50 == 0) {
-                std::cout << "  Testing hash rate: " << (hashVal * 100) << "%" << std::endl;
-            }
+            std::cout << "  Testing hash rate: " << (hashVal * 100) << "%" << std::endl;
             
             for (int gameNum = 1; gameNum <= numberOfGames; gameNum++) {
                 
@@ -116,7 +113,7 @@ int main(int argc, const char *argv[]) {
                 
                 std::string miner0Strategy = scheduler.getActiveStrategy(0, BlockHeight(0));
                 std::string miner1Strategy = scheduler.getActiveStrategy(1, BlockHeight(0));
-                if (miner0Strategy.empty()) miner0Strategy = "selfish";
+                if (miner0Strategy.empty()) miner0Strategy = "stubborn-fork";
                 if (miner1Strategy.empty()) miner1Strategy = "default-selfish";
                 
                 MinerParameters miner0Params = {0, "Miner-0", miner0Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
@@ -147,22 +144,27 @@ int main(int argc, const char *argv[]) {
                     
                     bool strategyChanged = false;
                     
+                    // DEFERRED SWITCHING: Wait until private chains are published naturally
                     if (newMiner0Strategy != miner0Strategy) {
-                        // Only switch if no private chain, otherwise defer the switch
-                        if (!minerGroup.getMiner(0).publishesNextRound()) {
+                        bool hasPrivateChain = minerGroup.getMiner(0).publishesNextRound();
+                        
+                        if (!hasPrivateChain) {
+                            // Safe to switch - no private chain
                             GAMEINFO("Block " << currentHeight << ": Miner 0 switching from " 
                                      << miner0Strategy << " to " << newMiner0Strategy << std::endl);
                             minerGroup.getMiner(0).changeStrategy(*strategyPool[newMiner0Strategy], *blockchain);
                             miner0Strategy = newMiner0Strategy;
                             strategyChanged = true;
                         } else {
+                            // Defer switch - keep trying on subsequent blocks
                             GAMEINFO("Block " << currentHeight << ": Miner 0 deferring switch (has private chain)" << std::endl);
                         }
                     }
                     
                     if (newMiner1Strategy != miner1Strategy) {
-                        // Only switch if no private chain, otherwise defer the switch
-                        if (!minerGroup.getMiner(1).publishesNextRound()) {
+                        bool hasPrivateChain = minerGroup.getMiner(1).publishesNextRound();
+                        
+                        if (!hasPrivateChain) {
                             GAMEINFO("Block " << currentHeight << ": Miner 1 switching from " 
                                      << miner1Strategy << " to " << newMiner1Strategy << std::endl);
                             minerGroup.getMiner(1).changeStrategy(*strategyPool[newMiner1Strategy], *blockchain);
@@ -231,10 +233,11 @@ int main(int argc, const char *argv[]) {
     }
     
     output.close();
-    std::cout << "\n=== Simulation Complete ===" << std::endl;
+    std::cout << "\n=== B5 No-Abandon Simulation Complete ===" << std::endl;
     std::cout << "Results written to: " << outputFile << std::endl;
+    std::cout << "Total games run: " << (5 * 16 * numberOfGames) << " (2000 games)" << std::endl;
     
-    GAMEINFO("All games complete." << std::endl);
+    GAMEINFO("All B5 no-abandon games complete." << std::endl);
     
     return 0;
 }

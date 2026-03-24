@@ -1,0 +1,18 @@
+# Strategy Schedule - Rational Adaptation
+# High gamma (0.95): Rational (game-theory optimized for good connectivity)
+# Low gamma (0.8): Stubborn-trail (exploits delays)
+#
+# Theory: Rational strategy should perform well when network is predictable
+
+# Miner 0: Rational when stable, stubborn when volatile
+0, 2499, rational
+2500, 4999, stubborn-trail
+5000, 7499, rational
+7500, 9999, stubborn-trail
+10000, 12499, rational
+12500, 14999, stubborn-trail
+15000, 17499, rational
+17500, 19999, stubborn-trail
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

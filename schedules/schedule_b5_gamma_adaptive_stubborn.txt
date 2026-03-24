@@ -1,0 +1,21 @@
+# Strategy Schedule - Gamma-Adaptive with Stubborn Strategies
+# Switches between strategies optimized for different connectivity
+#
+# High gamma (0.95): Use selfish (fast propagation favors simple selfish)
+# Low gamma (0.8): Use stubborn-lead-trail (poor connectivity favors aggressive withholding)
+#
+# Miner 0 (attacker): Adapts strategy to gamma
+# Miner 1 (honest): Stays on default-selfish
+
+# Miner 0: Adapt to gamma changes
+0, 2499, selfish
+2500, 4999, stubborn-lead-trail
+5000, 7499, selfish
+7500, 9999, stubborn-lead-trail
+10000, 12499, selfish
+12500, 14999, stubborn-lead-trail
+15000, 17499, selfish
+17500, 19999, stubborn-lead-trail
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

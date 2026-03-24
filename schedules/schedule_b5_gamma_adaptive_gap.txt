@@ -1,0 +1,16 @@
+# Strategy Schedule - Gamma-Adaptive with Gap
+# High gamma: selfish (standard for fast propagation)
+# Low gamma: gap (exploits network gaps/delays)
+
+# Miner 0: Adapt to gamma changes
+0, 2499, selfish
+2500, 4999, gap
+5000, 7499, selfish
+7500, 9999, gap
+10000, 12499, selfish
+12500, 14999, gap
+15000, 17499, selfish
+17500, 19999, gap
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

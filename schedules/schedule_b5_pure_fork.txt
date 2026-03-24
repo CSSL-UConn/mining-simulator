@@ -1,0 +1,12 @@
+# Pure Stubborn-Fork Strategy (B5 Baseline)
+# Format: miner_id, start_block, end_block, strategy_name
+#
+# This schedule tests pure stubborn-fork mining for the entire 20,000 block simulation
+# Use with ScheduledStratSimB5 for focused gamma (0.8-1.0) and hash rate (0.15-0.3) testing
+# Compare against dynamic switching to see if switching provides benefit
+
+# Miner 0: Pure stubborn-fork throughout
+0, 0, 19999, stubborn-fork
+
+# Miner 1: Gamma-aware honest miner (required for selfish mining to work!)
+1, 0, 19999, default-selfish

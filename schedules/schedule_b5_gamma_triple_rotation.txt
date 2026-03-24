@@ -1,0 +1,20 @@
+# Strategy Schedule - Triple Rotation
+# Rotates through three strategies based on gamma patterns
+# High gamma (0.95): selfish
+# Mid gamma (0.85): petty  
+# Low gamma (0.8): stubborn-trail
+#
+# Requires custom gamma schedule with three levels
+
+# Miner 0: Triple rotation
+0, 2499, selfish
+2500, 4999, stubborn-trail
+5000, 7499, petty
+7500, 9999, stubborn-trail
+10000, 12499, selfish
+12500, 14999, stubborn-trail
+15000, 17499, petty
+17500, 19999, stubborn-trail
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

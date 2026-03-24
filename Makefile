@@ -18,7 +18,7 @@ OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 STRAT_SRCS := $(wildcard StratSim/*.cpp)
 STRAT_OBJS := $(patsubst %.cpp,%.o,$(STRAT_SRCS))
 
-all: strat selfish scheduled-strat
+all: strat selfish scheduled-strat scheduled-strat-b5 scheduled-strat-b5-gamma scheduled-strat-b5-no-abandon epoch-tracking
 
 test-scheduler: tests/test_strategy_scheduler.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
@@ -30,6 +30,18 @@ selfish: SelfishSim/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
 
 scheduled-strat: ScheduledStratSim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+scheduled-strat-b5: ScheduledStratSimB5/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+scheduled-strat-b5-gamma: ScheduledStratSimB5Gamma/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+scheduled-strat-b5-no-abandon: ScheduledStratSimB5NoAbandon/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
+epoch-tracking: EpochTrackingSim/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
 
 publishN: PublishNSim/main.cpp $(OBJS)
@@ -78,7 +90,7 @@ double-strat: DoubleStratSim/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS) $(INC) $(IGSL) $(IBLAS) $(LGSL) $(LBLAS) $(LDLIBS) -o $@ -c $<
 
 clean:
-	rm -rf BlockSim/*.o *.o strat selfish stubborn-fork stubborn-trail stubborn-lead scheduled-strat
+	rm -rf BlockSim/*.o *.o strat selfish stubborn-fork stubborn-trail stubborn-lead scheduled-strat scheduled-strat-b5 scheduled-strat-b5-gamma
 
 .PHONY: all clean
 

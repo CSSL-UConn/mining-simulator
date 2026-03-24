@@ -1,0 +1,18 @@
+# Strategy Schedule - Publish-N Adaptation
+# High gamma (0.95): Publish-3 (batch release works well with fast propagation)
+# Low gamma (0.8): Stubborn-trail (traditional withholding in poor connectivity)
+#
+# Theory: Batch publishing strategies benefit from good connectivity
+
+# Miner 0: Publish-N when connected, stubborn when not
+0, 2499, publish-3
+2500, 4999, stubborn-trail
+5000, 7499, publish-3
+7500, 9999, stubborn-trail
+10000, 12499, publish-3
+12500, 14999, stubborn-trail
+15000, 17499, publish-3
+17500, 19999, stubborn-trail
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

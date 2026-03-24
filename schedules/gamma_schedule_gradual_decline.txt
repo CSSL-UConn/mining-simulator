@@ -1,0 +1,13 @@
+# Gamma Schedule File - Gradual Network Decline
+# Format: start_block, end_block, gamma_value
+#
+# This schedule simulates gradually degrading network
+# Tests if strategies can maintain profitability as network worsens
+
+# Start excellent
+0, 4999, 0.95
+
+# Gradual decline
+5000, 9999, 0.9
+10000, 14999, 0.85
+15000, 19999, 0.8

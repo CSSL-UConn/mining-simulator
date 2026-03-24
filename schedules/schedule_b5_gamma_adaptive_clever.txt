@@ -1,0 +1,16 @@
+# Strategy Schedule - Gamma-Adaptive with Clever Selfish
+# High gamma: clever-selfish (optimized for fast propagation)
+# Low gamma: stubborn-trail (exploits delays)
+
+# Miner 0: Adapt to gamma changes
+0, 2499, clever-selfish
+2500, 4999, stubborn-trail
+5000, 7499, clever-selfish
+7500, 9999, stubborn-trail
+10000, 12499, clever-selfish
+12500, 14999, stubborn-trail
+15000, 17499, clever-selfish
+17500, 19999, stubborn-trail
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

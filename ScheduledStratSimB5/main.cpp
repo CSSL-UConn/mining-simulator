@@ -1,9 +1,9 @@
 //
 //  main.cpp
-//  ScheduledStratSim
+//  ScheduledStratSimB5
 //
-//  Simulation with continuous blockchain and dynamic strategy changes
-//  Structured like SelfishSim for statistical testing
+//  Focused simulation for gamma 0.8-1.0 and hash rate 0.15-0.3
+//  Tests stubborn-fork ↔ stubborn-trail-fork switching patterns
 //
 
 #include "BlockSim/strategy.hpp"
@@ -45,19 +45,20 @@ int main(int argc, const char *argv[]) {
     
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <strategy_schedule_file> [output_file]" << std::endl;
+        std::cerr << "\nScheduledStratSimB5 - Focused Parameter Testing" << std::endl;
+        std::cerr << "Gamma (connectivity): 0.8 to 1.0 in 0.05 increments" << std::endl;
+        std::cerr << "Hash rate: 0.15 to 0.3 in 0.01 increments" << std::endl;
         std::cerr << "\nStrategy schedule file format:" << std::endl;
         std::cerr << "  miner_id, start_block, end_block, strategy_name" << std::endl;
-        std::cerr << "\nThis runs multiple games testing different gamma values and hash rates" << std::endl;
-        std::cerr << "with dynamic strategy switching (continuous blockchain per game)." << std::endl;
-        std::cerr << "\nSchedule example:" << std::endl;
-        std::cerr << "  0, 0, 9999, selfish" << std::endl;
-        std::cerr << "  0, 10000, 19999, stubborn-trail" << std::endl;
+        std::cerr << "\nSchedule example (stubborn-fork ↔ stubborn-trail-fork):" << std::endl;
+        std::cerr << "  0, 0, 4999, stubborn-fork" << std::endl;
+        std::cerr << "  0, 5000, 9999, stubborn-trail-fork" << std::endl;
         std::cerr << "  1, 0, 19999, default-selfish" << std::endl;
         return 1;
     }
     
     std::string scheduleFile = argv[1];
-    std::string outputFile = argc >= 3 ? argv[2] : "scheduled_output.txt";
+    std::string outputFile = argc >= 3 ? argv[2] : "scheduled_b5_output.txt";
     
     int numberOfGames = 25;
     
@@ -69,7 +70,9 @@ int main(int argc, const char *argv[]) {
     
     std::cout << "Successfully loaded schedule with " << scheduler.getScheduleSize() << " strategy changes" << std::endl;
     
-    GAMEINFO("\n#####\nRunning Dynamic Strategy Switching Simulation\n#####\n" << std::endl);
+    GAMEINFO("\n#####\nRunning B5 Focused Dynamic Strategy Simulation\n#####\n" << std::endl);
+    GAMEINFO("Gamma range: 0.8 - 1.0 (connectivity rate)" << std::endl);
+    GAMEINFO("Hash rate range: 0.15 - 0.3 (15% - 30%)" << std::endl);
     
     std::ofstream output(outputFile);
     if (!output.is_open()) {
@@ -77,25 +80,25 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
     
-    output << "# Dynamic Strategy Switching Simulation Results" << std::endl;
+    output << "# B5 Focused Dynamic Strategy Switching Simulation Results" << std::endl;
     output << "# Schedule file: " << scheduleFile << std::endl;
-    output << "# Miner 0: selfish (0-6666), stubborn-trail (6667-13333), petty (13334-19999)" << std::endl;
-    output << "# Miner 1: default-selfish (0-19999)" << std::endl;
+    output << "# Gamma (connectivity) range: 0.8 - 1.0 in 0.05 increments" << std::endl;
+    output << "# Hash rate range: 0.15 - 0.3 (15% - 30%) in 0.01 increments" << std::endl;
     output << "Gamma, Miner0_ProfitFraction, Miner0_HashRate, Miner1_HashRate, Miner0_BlockFraction" << std::endl;
 
     
-    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += 0.25) {
+    // Focused gamma range: 0.8 to 1.0 in 0.05 increments
+    for (double gammaVal = 0.8; gammaVal < 1.01; gammaVal += 0.05) {
         
-        std::cout << "\n=== Testing with Gamma = " << gammaVal << " ===" << std::endl;
+        std::cout << "\n=== Testing with Gamma (connectivity) = " << gammaVal << " ===" << std::endl;
         
-        for (double hashVal = 0.005; hashVal < 0.51; hashVal += 0.005) {
+        // Focused hash rate range: 0.15 to 0.3 in 0.01 increments
+        for (double hashVal = 0.15; hashVal < 0.31; hashVal += 0.01) {
             
             HashRate miner0Power = HashRate(hashVal);
             HashRate miner1Power = HashRate(1.0 - hashVal);
             
-            if (((int)(hashVal * 1000)) % 50 == 0) {
-                std::cout << "  Testing hash rate: " << (hashVal * 100) << "%" << std::endl;
-            }
+            std::cout << "  Testing hash rate: " << (hashVal * 100) << "%" << std::endl;
             
             for (int gameNum = 1; gameNum <= numberOfGames; gameNum++) {
                 
@@ -116,7 +119,7 @@ int main(int argc, const char *argv[]) {
                 
                 std::string miner0Strategy = scheduler.getActiveStrategy(0, BlockHeight(0));
                 std::string miner1Strategy = scheduler.getActiveStrategy(1, BlockHeight(0));
-                if (miner0Strategy.empty()) miner0Strategy = "selfish";
+                if (miner0Strategy.empty()) miner0Strategy = "stubborn-fork";
                 if (miner1Strategy.empty()) miner1Strategy = "default-selfish";
                 
                 MinerParameters miner0Params = {0, "Miner-0", miner0Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
@@ -231,10 +234,11 @@ int main(int argc, const char *argv[]) {
     }
     
     output.close();
-    std::cout << "\n=== Simulation Complete ===" << std::endl;
+    std::cout << "\n=== B5 Simulation Complete ===" << std::endl;
     std::cout << "Results written to: " << outputFile << std::endl;
+    std::cout << "Total games run: " << (5 * 16 * numberOfGames) << std::endl;
     
-    GAMEINFO("All games complete." << std::endl);
+    GAMEINFO("All B5 games complete." << std::endl);
     
     return 0;
 }

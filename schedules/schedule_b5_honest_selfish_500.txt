@@ -1,0 +1,53 @@
+# Honest ↔ Selfish Alternating Strategy (500 block intervals, B5 version)
+# Format: miner_id, start_block, end_block, strategy_name
+#
+# This schedule alternates between honest and selfish mining every 500 blocks
+# Use with ScheduledStratSimB5 for focused gamma (0.8-1.0) and hash rate (0.15-0.3) testing
+# Total: 40 switches over 20,000 blocks
+# Pattern: honest → selfish → honest → selfish (repeated)
+# Testing if very frequent switching improves or hurts performance
+
+# Miner 0: Alternating honest/selfish every 500 blocks
+0, 0, 499, default
+0, 500, 999, selfish
+0, 1000, 1499, default
+0, 1500, 1999, selfish
+0, 2000, 2499, default
+0, 2500, 2999, selfish
+0, 3000, 3499, default
+0, 3500, 3999, selfish
+0, 4000, 4499, default
+0, 4500, 4999, selfish
+0, 5000, 5499, default
+0, 5500, 5999, selfish
+0, 6000, 6499, default
+0, 6500, 6999, selfish
+0, 7000, 7499, default
+0, 7500, 7999, selfish
+0, 8000, 8499, default
+0, 8500, 8999, selfish
+0, 9000, 9499, default
+0, 9500, 9999, selfish
+0, 10000, 10499, default
+0, 10500, 10999, selfish
+0, 11000, 11499, default
+0, 11500, 11999, selfish
+0, 12000, 12499, default
+0, 12500, 12999, selfish
+0, 13000, 13499, default
+0, 13500, 13999, selfish
+0, 14000, 14499, default
+0, 14500, 14999, selfish
+0, 15000, 15499, default
+0, 15500, 15999, selfish
+0, 16000, 16499, default
+0, 16500, 16999, selfish
+0, 17000, 17499, default
+0, 17500, 17999, selfish
+0, 18000, 18499, default
+0, 18500, 18999, selfish
+0, 19000, 19499, default
+0, 19500, 19999, selfish
+
+# Miner 1: Gamma-aware honest miner (required for selfish mining to work!)
+1, 0, 19999, default-selfish

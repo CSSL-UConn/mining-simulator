@@ -1,0 +1,15 @@
+# Gamma Schedule File - Volatile Network Conditions
+# Format: start_block, end_block, gamma_value
+#
+# This schedule simulates highly volatile network
+# Frequent changes between high and low connectivity
+
+# Rapid oscillation
+0, 2499, 0.95
+2500, 4999, 0.8
+5000, 7499, 0.95
+7500, 9999, 0.8
+10000, 12499, 0.95
+12500, 14999, 0.8
+15000, 17499, 0.95
+17500, 19999, 0.8

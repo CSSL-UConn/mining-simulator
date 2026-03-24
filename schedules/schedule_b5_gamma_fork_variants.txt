@@ -1,0 +1,18 @@
+# Strategy Schedule - Fork Strategy Variants
+# High gamma (0.95): Stubborn-fork (fork advantage with fast propagation)
+# Low gamma (0.8): Stubborn-lead-fork (more aggressive in poor connectivity)
+#
+# Theory: Different fork strategies optimal at different connectivity levels
+
+# Miner 0: Fork strategies adapted to gamma
+0, 2499, stubborn-fork
+2500, 4999, stubborn-lead-fork
+5000, 7499, stubborn-fork
+7500, 9999, stubborn-lead-fork
+10000, 12499, stubborn-fork
+12500, 14999, stubborn-lead-fork
+15000, 17499, stubborn-fork
+17500, 19999, stubborn-lead-fork
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

@@ -1,0 +1,8 @@
+# Gamma Schedule File - Stable High Connectivity
+# Format: start_block, end_block, gamma_value
+#
+# This schedule maintains high connectivity throughout
+# Use as baseline for comparison
+
+# Stable high connectivity
+0, 19999, 0.9

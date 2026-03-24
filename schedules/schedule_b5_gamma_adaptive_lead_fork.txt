@@ -1,0 +1,16 @@
+# Strategy Schedule - Gamma-Adaptive with Lead-Fork
+# High gamma: selfish (standard)
+# Low gamma: stubborn-lead-fork (aggressive withholding + fork in poor connectivity)
+
+# Miner 0: Adapt to gamma changes
+0, 2499, selfish
+2500, 4999, stubborn-lead-fork
+5000, 7499, selfish
+7500, 9999, stubborn-lead-fork
+10000, 12499, selfish
+12500, 14999, stubborn-lead-fork
+15000, 17499, selfish
+17500, 19999, stubborn-lead-fork
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

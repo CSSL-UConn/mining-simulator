@@ -1,0 +1,8 @@
+# Strategy Schedule - Pure Selfish (Baseline for epoch tracking)
+# Both miners stay on their strategies throughout
+
+# Miner 0: Pure selfish
+0, 0, 19999, selfish
+
+# Miner 1: Honest
+1, 0, 19999, default-selfish

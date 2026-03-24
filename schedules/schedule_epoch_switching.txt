@@ -1,0 +1,17 @@
+# Strategy Schedule - Selfish ↔ Stubborn-Trail (for epoch tracking)
+# Switches every 2000 blocks (1 epoch)
+
+# Miner 0: Switch between selfish and stubborn-trail
+0, 0, 1999, selfish
+0, 2000, 3999, stubborn-trail
+0, 4000, 5999, selfish
+0, 6000, 7999, stubborn-trail
+0, 8000, 9999, selfish
+0, 10000, 11999, stubborn-trail
+0, 12000, 13999, selfish
+0, 14000, 15999, stubborn-trail
+0, 16000, 17999, selfish
+0, 18000, 19999, stubborn-trail
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

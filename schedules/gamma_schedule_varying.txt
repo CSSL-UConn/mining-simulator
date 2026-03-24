@@ -1,0 +1,19 @@
+# Gamma Schedule File - Varying Network Connectivity
+# Format: start_block, end_block, gamma_value
+#
+# This schedule simulates changing network conditions over 20,000 blocks
+# Gamma represents connectivity: higher = more connected network
+#
+# Pattern: Start high, degrade, recover, degrade again
+
+# Phase 1: High connectivity (blocks 0-4999)
+0, 4999, 0.9
+
+# Phase 2: Medium connectivity (blocks 5000-9999)
+5000, 9999, 0.85
+
+# Phase 3: Low connectivity (blocks 10000-14999)
+10000, 14999, 0.8
+
+# Phase 4: Recovery to high (blocks 15000-19999)
+15000, 19999, 0.95

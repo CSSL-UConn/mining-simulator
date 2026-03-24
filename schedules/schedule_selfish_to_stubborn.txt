@@ -1,0 +1,13 @@
+# Selfish to Stubborn-Trail Strategy (Dynamic Switching)
+# Format: miner_id, start_block, end_block, strategy_name
+#
+# This schedule tests switching from selfish to stubborn-trail at the midpoint
+# Hypothesis: Selfish mining builds early advantage, stubborn-trail maintains it
+# Switch point: 10,000 blocks (halfway through 20,000 block simulation)
+
+# Miner 0: Selfish first half, stubborn-trail second half
+0, 0, 9999, selfish
+0, 10000, 19999, stubborn-trail
+
+# Miner 1: Gamma-aware honest miner (required for selfish mining to work!)
+1, 0, 19999, default-selfish

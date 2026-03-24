@@ -1,0 +1,8 @@
+# Gamma Schedule - Slow Drift
+# Gradual changes over longer periods
+# Tests if slower adaptation works better
+
+0, 4999, 0.95
+5000, 9999, 0.85
+10000, 14999, 0.75
+15000, 19999, 0.85

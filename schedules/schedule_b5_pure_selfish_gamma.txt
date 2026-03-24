@@ -1,0 +1,9 @@
+# Strategy Schedule - Pure Selfish (for gamma comparisons)
+# Both miners stay on their strategies throughout
+# Used as baseline for different gamma schedules
+
+# Miner 0: Pure selfish
+0, 0, 19999, selfish
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

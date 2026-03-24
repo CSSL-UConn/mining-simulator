@@ -1,0 +1,18 @@
+# Strategy Schedule - Clever + Petty
+# High gamma (0.95): Clever-selfish (optimized for good connectivity)
+# Low gamma (0.8): Petty (aggressive in poor connectivity)
+#
+# Theory: Both are "smart" strategies that might complement each other
+
+# Miner 0: Smart strategies adapted to conditions
+0, 2499, clever-selfish
+2500, 4999, petty
+5000, 7499, clever-selfish
+7500, 9999, petty
+10000, 12499, clever-selfish
+12500, 14999, petty
+15000, 17499, clever-selfish
+17500, 19999, petty
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish

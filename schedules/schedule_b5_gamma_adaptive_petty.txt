@@ -1,0 +1,16 @@
+# Strategy Schedule - Gamma-Adaptive with Petty
+# High gamma: petty (aggressive in good connectivity)
+# Low gamma: stubborn-lead (withhold more in poor connectivity)
+
+# Miner 0: Adapt to gamma changes
+0, 2499, petty
+2500, 4999, stubborn-lead
+5000, 7499, petty
+7500, 9999, stubborn-lead
+10000, 12499, petty
+12500, 14999, stubborn-lead
+15000, 17499, petty
+17500, 19999, stubborn-lead
+
+# Miner 1: Stay honest
+1, 0, 19999, default-selfish
