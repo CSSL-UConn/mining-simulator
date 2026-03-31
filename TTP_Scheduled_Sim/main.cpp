@@ -128,7 +128,7 @@ int main(int argc, const char *argv[]) {
                     "default", "selfish", "default-selfish", "stubborn-trail", "stubborn-fork", 
                     "stubborn-lead", "stubborn-lead-fork", "stubborn-trail-fork", 
                     "stubborn-lead-trail", "stubborn-lead-trail-fork", "petty", 
-                    "lazy-fork", "gap", "rational", "publish-3", "publish-4"
+                    "lazy-fork", "gap", "rational", "publish-3", "publish-4, default-stubborn"
                 };
                 
                 for (const auto& name : strategyNames) {

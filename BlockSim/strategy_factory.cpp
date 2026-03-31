@@ -31,7 +31,11 @@ std::unique_ptr<Strategy> createStrategyByName(const std::string& name,
     if (lowerName == "default-selfish") {
         return createDefaultSelfishStrategy(noiseInTransactions, gamma);
     }
-    
+   
+    if (lowerName == "default-stubborn") {
+        return createDefaultStubbornTrailStrategy(noiseInTransactions, gamma);
+    }
+
     if (lowerName == "clever-selfish") {
         return createCleverSelfishStrategy(noiseInTransactions, UNDERCUT_VALUE);
     }
