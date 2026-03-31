@@ -35,12 +35,12 @@
 #define NOISE_IN_TRANSACTIONS false
 #define NETWORK_DELAY BlockTime(0)
 
-#define B BlockValue(Value(22) * SATOSHI_PER_BITCOIN)
+#define B BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
 #define TOTAL_BLOCK_VALUE BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
 #define SEC_PER_BLOCK BlockRate(600)
 #define A (TOTAL_BLOCK_VALUE - B)/SEC_PER_BLOCK
 
-#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(20000)
+#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(12096)
 #define DAP_LENGTH 2016
 
 int main(int argc, const char *argv[]) {
@@ -59,7 +59,7 @@ int main(int argc, const char *argv[]) {
     std::string scheduleFile = argv[1];
     std::string outputFile = argc >= 3 ? argv[2] : "scheduled_output.txt";
     
-    int numberOfGames = 25;
+    int numberOfGames = 100;
     
     StrategyScheduler scheduler;
     if (!scheduler.loadFromFile(scheduleFile)) {
@@ -105,11 +105,11 @@ int main(int argc, const char *argv[]) {
               << "rrr,seconds_per_block, orphan_rate"
               << std::endl;
 
-    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += .25) {
+    for (double gammaVal = 0.5; gammaVal < 1.01; gammaVal += 1.25) {
         
         std::cout << "\n=== Testing with Gamma = " << gammaVal << " ===" << std::endl;
         
-        for (double hashVal = 0.1; hashVal < 0.51; hashVal += 0.05) {
+        for (double hashVal = 0.275; hashVal < 0.51; hashVal += 1.05) {
             
             HashRate miner0Power = HashRate(hashVal);
             HashRate miner1Power = HashRate(1.0 - hashVal);
@@ -128,7 +128,7 @@ int main(int argc, const char *argv[]) {
                     "default", "selfish", "default-selfish", "stubborn-trail", "stubborn-fork", 
                     "stubborn-lead", "stubborn-lead-fork", "stubborn-trail-fork", 
                     "stubborn-lead-trail", "stubborn-lead-trail-fork", "petty", 
-                    "lazy-fork", "gap", "rational", "publish-3", "publish-4, default-stubborn"
+                    "lazy-fork", "gap", "rational", "publish-3", "publish-4", "default-stubborn"
                 };
                 
                 for (const auto& name : strategyNames) {
@@ -289,6 +289,8 @@ int main(int argc, const char *argv[]) {
                     const auto &m   = pt.attackerMetrics[0];
 
                     double totalBlk = rawCount(dap.totalBlocksOnChain);
+                    double totalMined = rawCount(dap.totalBlocksMined);
+                    double orphanRate = (totalMined > 0) ? 1.0 - (totalBlk / totalMined) : 0.0;
 
                     dapDetail << gammaVal << ","
                               << hashVal << ","
@@ -310,7 +312,8 @@ int main(int argc, const char *argv[]) {
                               << m.cumulativeHonestCounterfactual << ","
                               << m.cumulativeRevenueAdvantage << ","
                               << m.rrr << ","
-                              << rawRate(dap.difficultyRate)
+                              << rawRate(dap.difficultyRate) << ","
+                              << orphanRate
                               << std::endl;
                 }
             }

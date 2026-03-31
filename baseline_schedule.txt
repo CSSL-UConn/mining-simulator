@@ -2,5 +2,5 @@
 # Format: miner_id, start_block, end_block, strategy_name
 
 # Both miners use default (honest) strategy
-0, 0, 99, default
-1, 0, 99, default
+0, 0, 12096, default
+1, 0, 12096, default

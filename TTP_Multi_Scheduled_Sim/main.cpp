@@ -343,6 +343,8 @@ int main(int argc, const char *argv[]) {
                     const auto &dap = history[d];
 
                     double totalBlk = rawCount(dap.totalBlocksOnChain);
+                    double totalMined = rawCount(dap.totalBlocksMined);
+                    double orphanRate = (totalMined > 0) ? 1.0 - (totalBlk / totalMined) : 0.0;
 
                     for (size_t a = 0; a < dapTracker.numAttackers(); a++) {
                         const auto &atk = dapTracker.attackers()[a];
@@ -368,7 +370,8 @@ int main(int argc, const char *argv[]) {
                                   << m.cumulativeHonestCounterfactual << ","
                                   << m.cumulativeRevenueAdvantage << ","
                                   << m.rrr << ","
-                                  << rawRate(dap.difficultyRate)
+                                  << rawRate(dap.difficultyRate) << ","
+                                  << orphanRate
                                   << std::endl;
                     }
                 }
