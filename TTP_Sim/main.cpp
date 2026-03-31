@@ -33,11 +33,11 @@
 #define NOISE_IN_TRANSACTIONS false
 
 #define NETWORK_DELAY BlockTime(0)
-#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(20000)
+#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(12096)
 
 #define LAMBERT_COEFF 0.13533528323661
 
-#define B BlockValue(Value(22) * SATOSHI_PER_BITCOIN)
+#define B BlockValue(Value(20) * SATOSHI_PER_BITCOIN)
 #define TOTAL_BLOCK_VALUE BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
 
 #define SEC_PER_BLOCK BlockRate(600)
@@ -54,7 +54,7 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
 
-    int numberOfGames = 10;
+    int numberOfGames = 100;
 
     GAMEINFO("#####\nRunning Selfish Mining Revenue Advantage Simulation\n#####" << std::endl);
 
@@ -84,12 +84,12 @@ int main(int argc, const char *argv[]) {
               << "atk_blocks,total_blocks,"
               << "atk_revenue,honest_counterfactual_revenue,revenue_advantage,"
               << "cumulative_atk_revenue,cumulative_honest_revenue,cumulative_revenue_advantage,"
-              << "rrr,seconds_per_block"
+              << "rrr,seconds_per_block,orphan_rate"
               << std::endl;
 
-    for (double gammaVal = 0.5; gammaVal < 1.01; gammaVal += 1.25) {
+    for (double gammaVal = 0.0; gammaVal < 1.005; gammaVal += .005) {
 
-    for (double hashVal = 0.275; hashVal < .51; hashVal += 1.005) {
+    for (double hashVal = 0.005; hashVal < .505; hashVal += .005) {
 
         HashRate selfishPower = HashRate(hashVal);
         HashRate honestPower  = HashRate(1 - hashVal);
@@ -103,8 +103,8 @@ int main(int argc, const char *argv[]) {
             std::function<Value(const Blockchain &, Value)> forkFunc(
                 std::bind(functionForkPercentage, _1, _2, 2));
 
-            auto defaultStrat = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
-            auto selfishStrat = createSelfishStrategy(NOISE_IN_TRANSACTIONS);
+            auto defaultStrat = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
+            auto selfishStrat = createStubbornTrailStrategy(NOISE_IN_TRANSACTIONS,1);
 
             MinerParameters selfishMinerParams = {
                 0, std::to_string(0), selfishPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE
@@ -169,6 +169,8 @@ int main(int argc, const char *argv[]) {
                 const auto &m   = pt.attackerMetrics[0];
 
                 double totalBlk = rawCount(dap.totalBlocksOnChain);
+                double totalMined = rawCount(dap.totalBlocksMined);
+                double orphanRate = (totalMined > 0) ? 1.0 - (totalBlk / totalMined) : 0.0;
 
                 dapDetail << gammaVal << ","
                           << hashVal << ","
@@ -190,7 +192,8 @@ int main(int argc, const char *argv[]) {
                           << m.cumulativeHonestCounterfactual << ","
                           << m.cumulativeRevenueAdvantage << ","
                           << m.rrr << ","
-                          << rawRate(dap.difficultyRate)
+                          << rawRate(dap.difficultyRate) << ","
+                          << orphanRate
                           << std::endl;
             }
 
@@ -201,7 +204,7 @@ int main(int argc, const char *argv[]) {
     plot.close();
     dapDetail.close();
 
-    GAMEINFO("Games over." << std::endl);
+   GAMEINFO("Games over." << std::endl);
 
     std::cerr << "Results written to: " << filename << std::endl;
     std::cerr << "DAP detail written to: " << dapFilename << std::endl;

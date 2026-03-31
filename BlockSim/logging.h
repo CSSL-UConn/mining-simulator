@@ -12,7 +12,7 @@
 
 
 #define _ERROROUTPUT 1
-#define _GAMEINFO 1
+ #define _GAMEINFO 0
 // #define _COMMENTARY 1
 
 #ifdef _GAMEINFO

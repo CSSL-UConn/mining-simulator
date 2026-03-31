@@ -100,14 +100,14 @@ int main(int argc, const char *argv[]) {
               << "atk_blocks,total_blocks,"
               << "atk_revenue,honest_counterfactual_revenue,revenue_advantage,"
               << "cumulative_atk_revenue,cumulative_honest_revenue,cumulative_revenue_advantage,"
-              << "rrr,seconds_per_block"
+              << "rrr,seconds_per_block,orphan_rate"
               << std::endl;
 
-    for (double gammaVal = 0.5; gammaVal < 1.01; gammaVal += 1.25) {
+    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += 0.25) {
         
         std::cout << "\n=== Testing with Gamma = " << gammaVal << " ===" << std::endl;
         
-        for (double hashVal = 0.4; hashVal < 0.61; hashVal += 1.05) {
+        for (double hashVal = 0.05; hashVal < 0.61; hashVal += 0.05) {
             
             HashRate miner0Power = HashRate(hashVal / 2);
             HashRate miner1Power = HashRate(hashVal / 2);

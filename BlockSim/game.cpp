@@ -49,7 +49,8 @@ GameResult runGame(MinerGroup &minerGroup, Blockchain &blockchain, GameSettings 
         COMMENTARY("Publish phase:" << std::endl);
         
         minerGroup.nextPublishRound(blockchain);
-        
+       
+
         COMMENTARY("Round " << blockchain.getTime() << " over. Current blockchain:" << std::endl);
          COMMENTARYBLOCK (
              blockchain.printBlockchain();

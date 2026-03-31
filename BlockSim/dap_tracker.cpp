@@ -25,6 +25,7 @@ DAPTracker::DAPTracker(int dapLength, size_t numMiners, std::vector<AttackerInfo
     _baseSecondsPerBlock(0)
 {
     _prevCostSnapshot.resize(numMiners, 0.0);
+    _prevBlocksMinedSnapshot.resize(numMiners, BlockCount(0));
 }
 
 void DAPTracker::reset(BlockRate initialSecondsPerBlock) {
@@ -266,6 +267,7 @@ void DAPTracker::printSummary(std::ostream &os) const {
            << std::setw(14) << "CumRA"
            << std::setw(10) << "RRR"
            << std::setw(12) << "SecPerBlk"
+           << std::setw(12) << "OrphanRate"
            << std::endl;
         os << std::string(83, '-') << std::endl;
  
@@ -279,7 +281,12 @@ void DAPTracker::printSummary(std::ostream &os) const {
                << std::setw(10) << std::fixed << std::setprecision(4) << m.rrr;
  
             if (pt.dapIndex < static_cast<int>(_dapHistory.size())) {
-                os << std::setw(12) << rawRate(_dapHistory[pt.dapIndex].difficultyRate);
+                const auto &dap = _dapHistory[pt.dapIndex];
+                double totalBlk   = rawCount(dap.totalBlocksOnChain);
+                double totalMined = rawCount(dap.totalBlocksMined);
+                double orphanRate = (totalMined > 0) ? 1.0 - (totalBlk / totalMined) : 0.0;
+                os << std::setw(12) << rawRate(dap.difficultyRate);
+                os << std::setw(12) << std::fixed << std::setprecision(4) << orphanRate;
             }
             os << std::endl;
         }
@@ -296,10 +303,16 @@ void DAPTracker::printSummary(std::ostream &os) const {
 
 void DAPTracker::snapShotCosts(const MinerGroup &minerGroup,
                                 DAPRecord &record) {
+    BlockCount totalMinedThisDAP(0);
     for (size_t i = 0; i < _numMiners; i++) {
         double currentCost = minerGroup.miners[i]->totalMiningCost;
         record.minerStats[i].miningCostSnapshot = currentCost;
         record.minerStats[i].costDuringDAP      = currentCost - _prevCostSnapshot[i];
         _prevCostSnapshot[i] = currentCost;
+
+        BlockCount currentMined = minerGroup.miners[i]->getBlocksMinedTotal();
+        totalMinedThisDAP += currentMined - _prevBlocksMinedSnapshot[i];
+        _prevBlocksMinedSnapshot[i] = currentMined;
     }
+    record.totalBlocksMined = totalMinedThisDAP;
 }

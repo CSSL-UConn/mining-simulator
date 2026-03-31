@@ -43,13 +43,14 @@ struct DAPRecord {
     BlockTime   endTime;
     BlockRate   difficultyRate; 
     BlockCount  totalBlocksOnChain;
+    BlockCount totalBlocksMined; 
  
     std::vector<MinerDAPStats> minerStats; 
  
     DAPRecord()
         : dapIndex(0), startHeight(0), endHeight(0),
           startTime(0), endTime(0), difficultyRate(0),
-          totalBlocksOnChain(0) {}
+          totalBlocksOnChain(0), totalBlocksMined(0) {}
 };
 
 struct AttackerDAPMetrics {
@@ -147,6 +148,7 @@ class DAPTracker {
     BlockRate _baseSecondsPerBlock;
 
     std::vector<double> _prevCostSnapshot;
+    std::vector<BlockCount> _prevBlocksMinedSnapshot; 
     std::vector<DAPRecord> _dapHistory;
 
     std::vector<RevenueAdvantagePoint> _revAdvantageCurve;

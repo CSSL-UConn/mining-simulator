@@ -86,12 +86,12 @@ int main(int argc, const char *argv[]) {
               << "atk_blocks,total_blocks,"
               << "atk_revenue,honest_counterfactual_revenue,revenue_advantage,"
               << "cumulative_atk_revenue,cumulative_honest_revenue,cumulative_revenue_advantage,"
-              << "rrr,seconds_per_block"
+              << "rrr,seconds_per_block, orphan_rate"
               << std::endl;
 
-    for (double gammaVal = 0.5; gammaVal < 1.01; gammaVal += 1.50) {
+    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += 0.25) {
 
-    for (double hashVal = 0.4; hashVal < .70; hashVal += 1.01) {
+    for (double hashVal = 0.15; hashVal < .70; hashVal += .01) {
 
         HashRate selfishPower1 = HashRate(hashVal / 2);
         HashRate selfishPower2 = HashRate(hashVal / 2);

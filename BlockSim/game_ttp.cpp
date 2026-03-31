@@ -22,7 +22,7 @@
 
 GameResult runGameTTP(MinerGroup &minerGroup, Blockchain &blockchain, GameSettings gameSettings, DAPTracker &dapTracker) {
 
-    GAMEINFO("Players:" << std::endl << minerGroup);
+    // GAMEINFO("Players:" << std::endl << minerGroup);
  
     BlockTime totalSeconds =
         gameSettings.blockchainSettings.numberOfBlocks
@@ -92,11 +92,11 @@ GameResult runGameTTP(MinerGroup &minerGroup, Blockchain &blockchain, GameSettin
  
     for (size_t i = 0; i < minerGroup.miners.size(); i++) {
         const auto &miner = minerGroup.miners[i];
-        GAMEINFO(*miner << " earned:" << minerResults[i].totalProfit
-                 << " mined " << miner->getBlocksMinedTotal()
-                 << " total, of which "
-                 << minerResults[i].blocksInWinningChain
-                 << " made it into the final chain" << std::endl);
+        // GAMEINFO(*miner << " earned:" << minerResults[i].totalProfit
+        //          << " mined " << miner->getBlocksMinedTotal()
+        //          << " total, of which "
+        //          << minerResults[i].blocksInWinningChain
+        //          << " made it into the final chain" << std::endl);
         totalBlocks += miner->getBlocksMinedTotal();
         finalBlocks += minerResults[i].blocksInWinningChain;
     }
@@ -108,9 +108,9 @@ GameResult runGameTTP(MinerGroup &minerGroup, Blockchain &blockchain, GameSettin
  
     assert(winningBlock.valueInChain == totalValue);
  
-    GAMEINFO("Total blocks mined:" << totalBlocks
-             << " with " << finalBlocks
-             << " making it into the final chain" << std::endl);
+    // GAMEINFO("Total blocks mined:" << totalBlocks
+    //          << " with " << finalBlocks
+    //          << " making it into the final chain" << std::endl);
  
     return result;
 }
