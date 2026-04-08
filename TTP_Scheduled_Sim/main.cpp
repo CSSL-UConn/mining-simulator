@@ -32,15 +32,14 @@
 #include <vector>
 #include <map>
 
-#define NOISE_IN_TRANSACTIONS false
 #define NETWORK_DELAY BlockTime(0)
 
 #define B BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
-#define TOTAL_BLOCK_VALUE BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
+#define TOTAL_BLOCK_VALUE BlockValue(Value(275) * (SATOSHI_PER_BITCOIN / 10))
 #define SEC_PER_BLOCK BlockRate(600)
 #define A (TOTAL_BLOCK_VALUE - B)/SEC_PER_BLOCK
 
-#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(12096)
+#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(24192)
 #define DAP_LENGTH 2016
 
 int main(int argc, const char *argv[]) {
@@ -66,7 +65,13 @@ int main(int argc, const char *argv[]) {
         std::cerr << "Failed to load strategy schedule from: " << scheduleFile << std::endl;
         return 1;
     }
-    
+   
+    std::cout << "Config: noisyTransaction=" << scheduler.noisyTransaction
+          << " whaleEnabled=" << scheduler.whaleEnabled
+          << " whaleProb=" << scheduler.whaleProb
+          << " whaleMultiplier=" << scheduler.whaleMultiplier
+          << std::endl;
+
     std::cout << "Successfully loaded schedule with " << scheduler.getScheduleSize() 
               << " strategy changes" << std::endl;
     
@@ -105,11 +110,11 @@ int main(int argc, const char *argv[]) {
               << "rrr,seconds_per_block, orphan_rate"
               << std::endl;
 
-    for (double gammaVal = 0.5; gammaVal < 1.01; gammaVal += 1.25) {
+    for (double gammaVal = .50; gammaVal < 1.01; gammaVal += 1.25) {
         
         std::cout << "\n=== Testing with Gamma = " << gammaVal << " ===" << std::endl;
         
-        for (double hashVal = 0.275; hashVal < 0.51; hashVal += 1.05) {
+        for (double hashVal = 0.35; hashVal < 0.51; hashVal += 1.05) {
             
             HashRate miner0Power = HashRate(hashVal);
             HashRate miner1Power = HashRate(1.0 - hashVal);
@@ -132,7 +137,10 @@ int main(int argc, const char *argv[]) {
                 };
                 
                 for (const auto& name : strategyNames) {
-                    strategyPool[name] = createStrategyByName(name, false, NOISE_IN_TRANSACTIONS, gammaVal);
+                    strategyPool[name] = createStrategyByName(name, false, scheduler.noisyTransaction,
+                     gammaVal, scheduler.whaleEnabled, 
+        scheduler.whaleProb,
+        scheduler.whaleMultiplier);
                 }
 
                 std::string miner0Strategy = scheduler.getActiveStrategy(0, BlockHeight(0));
@@ -171,6 +179,9 @@ int main(int argc, const char *argv[]) {
 
                     BlockHeight currentHeight = blockchain->getMaxHeightPub();
 
+                    double feeMultiplier = scheduler.getCurrentFeeMultiplier(currentHeight);
+                    blockchain->updateFeeMultiplier(feeMultiplier);
+
                     std::string newMiner0Strategy = scheduler.getActiveStrategy(0, currentHeight);
                     std::string newMiner1Strategy = scheduler.getActiveStrategy(1, currentHeight);
                     
@@ -185,7 +196,9 @@ int main(int argc, const char *argv[]) {
                             GAMEINFO("Block " << currentHeight << ": Miner 0 switching  default-selfish's gamma to " 
                                  << gamma << std::endl);
                             std::string key = "default-selfish-0" + std::to_string(rawHeight(currentHeight));  
-                            strategyPool[key] = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma); 
+                            strategyPool[key] = createDefaultSelfishStrategy(scheduler.noisyTransaction, gamma, scheduler.whaleEnabled,
+        scheduler.whaleProb,
+        scheduler.whaleMultiplier); 
                             minerGroup.getMiner(0).changeStrategy(*strategyPool["default-selfish"], *blockchain);
                             miner0Strategy = newMiner0Strategy;
                             strategyChanged = true;
@@ -204,7 +217,9 @@ int main(int argc, const char *argv[]) {
                             GAMEINFO("Block " << currentHeight << ": Miner 1 switching  default-selfish's gamma to " 
                                  << gamma << std::endl);
                             std::string key = "default-selfish-1" + std::to_string(rawHeight(currentHeight)); 
-                            strategyPool[key] = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma);
+                            strategyPool[key] = createDefaultSelfishStrategy(scheduler.noisyTransaction, gamma, scheduler.whaleEnabled,
+        scheduler.whaleProb,
+        scheduler.whaleMultiplier);
                             minerGroup.getMiner(1).changeStrategy(*strategyPool["default-selfish"], *blockchain);
                             miner1Strategy = newMiner1Strategy;
                             strategyChanged = true;
@@ -272,8 +287,13 @@ int main(int argc, const char *argv[]) {
                 
                 const auto &curve = dapTracker.revenueAdvantageCurve();
                 double finalCumRA = 0;
+                double finalCumAttkRev = 0;
+                double finalhonestRev = 0;
+
                 if (!curve.empty()) {
-                    finalCumRA = curve.back().attackerMetrics[0].cumulativeRevenueAdvantage;
+                    finalCumAttkRev = curve.back().attackerMetrics[0].cumulativeAtkRevenue;
+                    finalhonestRev = curve.back().attackerMetrics[0].cumulativeHonestCounterfactual;
+                    finalCumRA = finalCumAttkRev/finalhonestRev; 
                 }
 
                 output << profitFraction << ", " << hashVal << ", " 
@@ -310,7 +330,7 @@ int main(int argc, const char *argv[]) {
                               << m.revenueAdvantageThisDAP << ","
                               << m.cumulativeAtkRevenue << ","
                               << m.cumulativeHonestCounterfactual << ","
-                              << m.cumulativeRevenueAdvantage << ","
+                              << (m.cumulativeAtkRevenue/ m.cumulativeHonestCounterfactual) << ","
                               << m.rrr << ","
                               << rawRate(dap.difficultyRate) << ","
                               << orphanRate

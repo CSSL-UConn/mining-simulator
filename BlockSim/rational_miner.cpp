@@ -21,14 +21,14 @@ using std::placeholders::_2;
 
 Block &RationalBlockToMineOn(const Miner &me, const Blockchain &chain);
 
-std::unique_ptr<Strategy> createRationalStrategy(bool noiseInTransactions) {
+std::unique_ptr<Strategy> createRationalStrategy(bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
 
     ParentSelectorFunc mineFunc;
     
    
     mineFunc = RationalBlockToMineOn;
     
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     return std::make_unique<Strategy>("rational", mineFunc, valueFunc);
 }

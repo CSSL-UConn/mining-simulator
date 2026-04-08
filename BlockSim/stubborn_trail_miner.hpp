@@ -23,7 +23,7 @@ protected:
     virtual BlockHeight heightToPublish(const Blockchain &blockchain, const Miner &me, std::vector<std::unique_ptr<Block>> &unpublishedBlocks) const;
 };
 
-std::unique_ptr<Strategy> createStubbornTrailStrategy(bool noiseInTransactions, Value trailCutoff);
+std::unique_ptr<Strategy> createStubbornTrailStrategy(bool noiseInTransactions, Value trailCutoff,bool whaleEnabled, double whaleProb, double whaleMultiplier);
 Block &stubbornTrailBlockToMineOn(const Miner &me, const Blockchain &blockchain, Value trailCutoff);
 
 #endif /* stubborn_trail_miner_hpp */

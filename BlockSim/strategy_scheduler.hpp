@@ -40,16 +40,28 @@ struct StrategyChange {
     }
 };
 
+struct FeeBreakpoint {
+    BlockHeight BlockHeight;
+    double multiplier;
+};
 class StrategyScheduler {
 private:
     std::vector<StrategyChange> schedule;
     std::map<unsigned int, std::vector<StrategyChange>> minerSchedules;  // Indexed by miner
+    std::vector<FeeBreakpoint> feeSchedule;
     
 public:
     StrategyScheduler();
     
     // Load schedule from file (new format: miner_id, start_block, end_block, strategy_name)
     bool loadFromFile(const std::string& filename);
+    double getCurrentFeeMultiplier(BlockHeight height) const;
+
+    bool noisyTransaction = false;
+    bool whaleEnabled = false;
+    double whaleProb = 0.05;
+    double whaleMultiplier = 3.0;
+    
     
     // Get all strategy changes that should occur at this block height
     std::vector<StrategyChange> getChangesAtHeight(BlockHeight height) const;

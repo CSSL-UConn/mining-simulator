@@ -19,8 +19,8 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-std::unique_ptr<Strategy> createIncentiveStubbornTrailForkStrategy(bool noiseInTransactions, Value trailCutoff, double incentiveFraction, Value forksToIncentivize) {
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+std::unique_ptr<Strategy> createIncentiveStubbornTrailForkStrategy(bool noiseInTransactions, Value trailCutoff, double incentiveFraction, Value forksToIncentivize, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     auto bindedStubbornTrailForkBlockToMineOn = std::bind(incentiveStubbornTrailForkBlockToMineOn, std::placeholders::_1, std::placeholders::_2, trailCutoff);
 

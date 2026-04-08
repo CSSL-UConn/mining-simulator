@@ -22,8 +22,8 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-std::unique_ptr<Strategy> createCleverSelfishStrategy(bool noiseInTransactions, Value cutoff) {
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+std::unique_ptr<Strategy> createCleverSelfishStrategy(bool noiseInTransactions, Value cutoff, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     return std::make_unique<Strategy>("clever-selfish", selfishBlockToMineOn, valueFunc, std::make_unique<CleverSelfishPublishingStyle>(cutoff));
 }

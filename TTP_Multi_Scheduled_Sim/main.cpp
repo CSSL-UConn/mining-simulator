@@ -35,12 +35,12 @@
 #define NOISE_IN_TRANSACTIONS false
 #define NETWORK_DELAY BlockTime(0)
 
-#define B BlockValue(Value(22) * SATOSHI_PER_BITCOIN)
-#define TOTAL_BLOCK_VALUE BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
+#define B BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
+#define TOTAL_BLOCK_VALUE BlockValue(Value(250) * (SATOSHI_PER_BITCOIN / 10))
 #define SEC_PER_BLOCK BlockRate(600)
 #define A (TOTAL_BLOCK_VALUE - B)/SEC_PER_BLOCK
 
-#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(20000)
+#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(24192)
 #define DAP_LENGTH 2016
 
 int main(int argc, const char *argv[]) {
@@ -60,7 +60,7 @@ int main(int argc, const char *argv[]) {
     std::string scheduleFile = argv[1];
     std::string outputFile = argc >= 3 ? argv[2] : "scheduled_multi_output.txt";
     
-    int numberOfGames = 25;
+    int numberOfGames = 30;
     
     StrategyScheduler scheduler;
     if (!scheduler.loadFromFile(scheduleFile)) {
@@ -107,7 +107,7 @@ int main(int argc, const char *argv[]) {
         
         std::cout << "\n=== Testing with Gamma = " << gammaVal << " ===" << std::endl;
         
-        for (double hashVal = 0.05; hashVal < 0.61; hashVal += 0.05) {
+        for (double hashVal = 0.3; hashVal < 0.61; hashVal += 0.01) {
             
             HashRate miner0Power = HashRate(hashVal / 2);
             HashRate miner1Power = HashRate(hashVal / 2);
@@ -133,7 +133,8 @@ int main(int argc, const char *argv[]) {
                 };
                 
                 for (const auto& name : strategyNames) {
-                    strategyPool[name] = createStrategyByName(name, false, NOISE_IN_TRANSACTIONS, gammaVal);
+                     strategyPool[name] = createStrategyByName(name, false, scheduler.noisyTransaction,
+                     gammaVal, scheduler.whaleEnabled, scheduler.whaleProb,scheduler.whaleMultiplier);
                 }
                 
                 // Miner setup
@@ -180,6 +181,9 @@ int main(int argc, const char *argv[]) {
 
                     BlockHeight currentHeight = blockchain->getMaxHeightPub();
                     
+                    double feeMultiplier = scheduler.getCurrentFeeMultiplier(currentHeight);
+                    blockchain->updateFeeMultiplier(feeMultiplier);
+
                     std::string newMiner0Strategy = scheduler.getActiveStrategy(0, currentHeight);
                     std::string newMiner1Strategy = scheduler.getActiveStrategy(1, currentHeight);
                     std::string newMiner2Strategy = scheduler.getActiveStrategy(2, currentHeight);
@@ -197,7 +201,7 @@ int main(int argc, const char *argv[]) {
                             GAMEINFO("Block " << currentHeight << ": Miner 0 switching default-selfish's gamma to " 
                                  << gamma << std::endl);
                             std::string key = "default-selfish-0" + std::to_string(rawHeight(currentHeight));  
-                            strategyPool[key] = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma); 
+                            strategyPool[key] = createDefaultSelfishStrategy(scheduler.noisyTransaction, gamma, scheduler.whaleEnabled,scheduler.whaleProb,scheduler.whaleMultiplier); 
                             minerGroup.getMiner(0).changeStrategy(*strategyPool["default-selfish"], *blockchain);
                             miner0Strategy = newMiner0Strategy;
                             strategyChanged = true;
@@ -217,7 +221,7 @@ int main(int argc, const char *argv[]) {
                             GAMEINFO("Block " << currentHeight << ": Miner 1 switching default-selfish's gamma to " 
                                  << gamma << std::endl);
                             std::string key = "default-selfish-1" + std::to_string(rawHeight(currentHeight)); 
-                            strategyPool[key] = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma);
+                            strategyPool[key] = createDefaultSelfishStrategy(scheduler.noisyTransaction, gamma, scheduler.whaleEnabled, scheduler.whaleProb, scheduler.whaleMultiplier);
                             minerGroup.getMiner(1).changeStrategy(*strategyPool["default-selfish"], *blockchain);
                             miner1Strategy = newMiner1Strategy;
                             strategyChanged = true;
@@ -237,7 +241,7 @@ int main(int argc, const char *argv[]) {
                             GAMEINFO("Block " << currentHeight << ": Miner 2 switching default-selfish's gamma to " 
                                  << gamma << std::endl);
                             std::string key = "default-selfish-2" + std::to_string(rawHeight(currentHeight));  
-                            strategyPool[key] = createDefaultSelfishStrategy(NOISE_IN_TRANSACTIONS, gamma); 
+                            strategyPool[key] = createDefaultSelfishStrategy(scheduler.noisyTransaction, gamma, scheduler.whaleEnabled, scheduler.whaleProb, scheduler.whaleMultiplier); 
                             minerGroup.getMiner(2).changeStrategy(*strategyPool["default-selfish"], *blockchain);
                             miner2Strategy = newMiner2Strategy;
                             strategyChanged = true;

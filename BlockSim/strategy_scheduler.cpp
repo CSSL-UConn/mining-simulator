@@ -22,6 +22,7 @@ bool StrategyScheduler::loadFromFile(const std::string& filename) {
     
     schedule.clear();
     minerSchedules.clear();
+    feeSchedule.clear();
     
     std::string line;
     int lineNumber = 0;
@@ -50,6 +51,48 @@ bool StrategyScheduler::loadFromFile(const std::string& filename) {
             tokens.push_back(token);
         }
         
+        if(tokens.empty()) continue;
+
+        if(tokens[0] == "FEE_CHANGE") {
+            if (tokens.size() < 3) {
+                std::cerr << "warning FEE_Change requires block height and multiplier at line" << lineNumber << std::endl;
+                continue;
+            }
+            FeeBreakpoint bp; 
+            bp.BlockHeight = BlockHeight(std::stoul(tokens[1]));
+            bp.multiplier = std::stod(tokens[2]);
+            feeSchedule.push_back(bp);
+            std::sort(feeSchedule.begin(), feeSchedule.end(), [](const FeeBreakpoint& a, const FeeBreakpoint& b) {
+                    return a.BlockHeight < b.BlockHeight;
+                });
+            std::cout << "Fee change at block " << rawHeight(bp.BlockHeight) 
+                      << ": multiplier=" << bp.multiplier << std::endl;
+            continue;
+        }
+        if (tokens[0] == "NOISY_TRANSACTION") {
+            noisyTransaction = (tokens.size() >= 2 && (tokens[1] == "true" || tokens[1] == "1"));
+            std::cout << "NOISY_TRANSACTION: " << (noisyTransaction ? "true" : "false") << std::endl;
+            continue;
+        }
+        if (tokens[0] == "WHALE_ENABLED") {
+            whaleEnabled = (tokens.size() >= 2 && (tokens[1] == "true" || tokens[1] == "1"));
+            std::cout << "WHALE_ENABLED: " << (whaleEnabled ? "true" : "false") << std::endl;
+            continue;
+        }
+        if (tokens[0] == "WHALE_PROB") {
+             if (tokens.size() >= 2) {
+                whaleProb = std::stod(tokens[1]);
+            }
+            std::cout << "WHALE_PROB: " << whaleProb << std::endl;
+            continue;
+        }
+        if (tokens[0] == "WHALE_MULTIPLIER") {
+            if (tokens.size() >= 2) {
+                whaleMultiplier = std::stod(tokens[1]);
+            }
+            std::cout << "WHALE_MULTIPLIER: " << whaleMultiplier << std::endl;
+            continue;
+        }
         if (tokens.size() > 5) {
             std::cerr << "Warning: Invalid format at line " << lineNumber 
                       << " (expected: miner_id, start_block, end_block, strategy_name, gamma (optional))" << std::endl;
@@ -97,6 +140,17 @@ bool StrategyScheduler::loadFromFile(const std::string& filename) {
     return true;
 }
 
+double StrategyScheduler::getCurrentFeeMultiplier(BlockHeight height) const {
+    double multiplier = 1.0;
+    for (const auto& bp: feeSchedule) {
+        if (height >= bp.BlockHeight) {
+            multiplier = bp.multiplier; 
+        } else {
+            break;
+        }
+    }
+    return multiplier;
+}
 
 double StrategyScheduler::getConnectivityAtHeight(BlockHeight height) const {
     // Find honest mining connectivity at block height

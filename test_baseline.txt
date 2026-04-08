@@ -1,0 +1,13 @@
+# Test 1: no noise, no whale (baseline)
+# Expected: flat deterministic block values
+
+NOISY_TRANSACTION, true
+WHALE_ENABLED, true
+WHALE_PROB, 0.05
+WHALE_MULTIPLIER, 4.0
+
+FEE_CHANGE, 6048, 2.0
+FEE_CHANGE, 10080, 3.0
+
+0, 0, 12096, selfish, -1
+1, 0, 12096, default-selfish, -1

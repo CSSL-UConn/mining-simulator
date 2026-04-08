@@ -30,7 +30,7 @@ GameResult runGameTTP(MinerGroup &minerGroup, Blockchain &blockchain, GameSettin
 
     while (blockchain.getTime() < totalSeconds) {
         BlockTime nextTime = minerGroup.nextEventTime(blockchain);
- 
+
         assert(blockchain.getTime() <= nextTime);
  
         blockchain.advanceToTime(nextTime);

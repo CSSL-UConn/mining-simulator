@@ -19,8 +19,8 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-std::unique_ptr<Strategy> createStubbornForkStrategy(bool noiseInTransactions) {
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+std::unique_ptr<Strategy> createStubbornForkStrategy(bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     return std::make_unique<Strategy>("stubbornFork", stubbornForkBlockToMineOn, valueFunc, std::make_unique<StubbornForkPublishingStyle>());
 }

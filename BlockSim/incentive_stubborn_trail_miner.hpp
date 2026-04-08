@@ -28,7 +28,7 @@ protected:
 };
 
 
-std::unique_ptr<Strategy> createIncentiveStubbornTrailStrategy(bool noiseInTransactions, Value trailCutoff,double incentiveFraction, Value forksToIncentivize);
+std::unique_ptr<Strategy> createIncentiveStubbornTrailStrategy(bool noiseInTransactions, Value trailCutoff,double incentiveFraction, Value forksToIncentivize, bool whaleEnabled, double whaleProb, double whaleMultiplier);
 Block &incentiveStubbornTrailBlockToMineOn(const Miner &me, const Blockchain &blockchain, Value trailCutoff);
 
 #endif /* incentive_stubborn_trail_miner_hpp */

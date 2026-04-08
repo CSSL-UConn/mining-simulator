@@ -31,13 +31,16 @@
 
 
 #define NOISE_IN_TRANSACTIONS false
+#define WHALE_ENABLED false
+#define WHALE_PROB 0.05
+#define WHALE_MULT 3
 
 #define NETWORK_DELAY BlockTime(0)
-#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(20000)
+#define EXPECTED_NUMBER_OF_BLOCKS BlockCount(12096)
 
 #define LAMBERT_COEFF 0.13533528323661
 
-#define B BlockValue(Value(22) * SATOSHI_PER_BITCOIN)
+#define B BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
 #define TOTAL_BLOCK_VALUE BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
 
 #define SEC_PER_BLOCK BlockRate(600)
@@ -53,7 +56,7 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
 
-    int numberOfGames = 10;
+    int numberOfGames = 100;
 
     GAMEINFO("#####\nRunning Double Selfish Mining TTP Simulation\n#####" << std::endl);
 
@@ -89,9 +92,9 @@ int main(int argc, const char *argv[]) {
               << "rrr,seconds_per_block, orphan_rate"
               << std::endl;
 
-    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += 0.25) {
+    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += 0.01) {
 
-    for (double hashVal = 0.15; hashVal < .70; hashVal += .01) {
+    for (double hashVal = 0.01; hashVal < .70; hashVal += .01) {
 
         HashRate selfishPower1 = HashRate(hashVal / 2);
         HashRate selfishPower2 = HashRate(hashVal / 2);
@@ -105,9 +108,9 @@ int main(int argc, const char *argv[]) {
             std::function<Value(const Blockchain &, Value)> forkFunc(
                 std::bind(functionForkPercentage, _1, _2, 2));
 
-            auto defaultStrat  = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
-            auto publishStrat  = createSelfishStrategy(NOISE_IN_TRANSACTIONS);
-            auto publishStrat2 = createSelfishStrategy(NOISE_IN_TRANSACTIONS);
+            auto defaultStrat  = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal, WHALE_ENABLED, WHALE_PROB, WHALE_PROB);
+            auto publishStrat  = createStubbornLeadTrailStrategy(NOISE_IN_TRANSACTIONS,1, WHALE_ENABLED, WHALE_PROB, WHALE_PROB);
+            auto publishStrat2 = createStubbornLeadTrailForkStrategy(NOISE_IN_TRANSACTIONS,1, WHALE_ENABLED, WHALE_PROB, WHALE_PROB);
 
             MinerParameters selfishMinerParams1 = {
                 0, std::to_string(0), selfishPower1, NETWORK_DELAY, COST_PER_SEC_TO_MINE

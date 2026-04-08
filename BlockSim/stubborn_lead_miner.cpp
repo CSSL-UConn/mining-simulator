@@ -19,8 +19,8 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-std::unique_ptr<Strategy> createStubbornLeadStrategy(bool noiseInTransactions) {
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+std::unique_ptr<Strategy> createStubbornLeadStrategy(bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     return std::make_unique<Strategy>("stubbornLead", stubbornLeadBlockToMineOn, valueFunc, std::make_unique<StubbornLeadPublishingStyle>());
 }

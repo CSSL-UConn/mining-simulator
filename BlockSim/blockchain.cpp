@@ -22,6 +22,7 @@ Blockchain::Blockchain(BlockchainSettings blockchainSettings) :
     valueNetworkTotal(0),
     timeInSecs(0),
     secondsPerBlock(blockchainSettings.secondsPerBlock),
+    baseFeeRate(blockchainSettings.transactionFeeRate),
     transactionFeeRate(blockchainSettings.transactionFeeRate),
     _maxHeightPub(0)
 {
@@ -47,6 +48,7 @@ void Blockchain::reset(BlockchainSettings blockchainSettings) {
     valueNetworkTotal = 0;
     timeInSecs = BlockTime(0);
     secondsPerBlock = blockchainSettings.secondsPerBlock;
+    baseFeeRate = blockchainSettings.transactionFeeRate; 
     transactionFeeRate = blockchainSettings.transactionFeeRate;
     _maxHeightPub = BlockHeight(0);
     _oldBlocks.reserve(_oldBlocks.size() + _blocks.size());
@@ -60,6 +62,10 @@ void Blockchain::reset(BlockchainSettings blockchainSettings) {
     _smallestBlocks[0].push_back(genesis.get());
     _blocksIndex[0].push_back(_blocks.size());
     _blocks.push_back(std::move(genesis));
+}
+
+void Blockchain::updateFeeMultiplier(double multiplier) {
+    transactionFeeRate = TimeRate(rawRate(baseFeeRate) * multiplier);
 }
 
 void Blockchain::publishBlock(std::unique_ptr<Block> block) {
@@ -211,7 +217,14 @@ Value Blockchain::gap(BlockHeight height) const {
 }
 
 Value Blockchain::rem(const Block &block) const {
-    return valueNetworkTotal - block.txFeesInChain + block.tip;
+    ValueType net = rawValue(valueNetworkTotal);
+    ValueType fees = rawValue(block.txFeesInChain);
+    ValueType tip = rawValue(block.tip);
+    ValueType reward = rawValue(block.nextBlockReward());
+
+    ValueType result = (net >= fees) ? (net - fees + tip) : tip;
+    return Value(result);
+
 }
 
 Value Blockchain::sub(const Value feeToDelete) const {

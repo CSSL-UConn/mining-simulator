@@ -24,7 +24,7 @@ protected:
     virtual BlockHeight heightToPublish(const Blockchain &blockchain, const Miner &me, std::vector<std::unique_ptr<Block>> &unpublishedBlocks) const;
 };
 
-std::unique_ptr<Strategy> createStubbornLeadForkStrategy(bool noiseInTransactions);
+std::unique_ptr<Strategy> createStubbornLeadForkStrategy(bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier);
 Block &stubbornLeadForkBlockToMineOn(const Miner &me, const Blockchain &blockchain);
 
 #endif /* stubborn_lead_fork_miner_hpp */

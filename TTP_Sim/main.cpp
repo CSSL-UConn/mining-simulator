@@ -31,6 +31,9 @@
 
 
 #define NOISE_IN_TRANSACTIONS false
+#define WHALE_ENABLED false
+#define WHALE_PROB 0.05
+#define WHALE_MULT 3
 
 #define NETWORK_DELAY BlockTime(0)
 #define EXPECTED_NUMBER_OF_BLOCKS BlockCount(12096)
@@ -103,8 +106,8 @@ int main(int argc, const char *argv[]) {
             std::function<Value(const Blockchain &, Value)> forkFunc(
                 std::bind(functionForkPercentage, _1, _2, 2));
 
-            auto defaultStrat = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal);
-            auto selfishStrat = createStubbornTrailStrategy(NOISE_IN_TRANSACTIONS,1);
+            auto defaultStrat = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal, WHALE_ENABLED, WHALE_PROB, WHALE_PROB);
+            auto selfishStrat = createStubbornTrailStrategy(NOISE_IN_TRANSACTIONS,1, WHALE_ENABLED, WHALE_PROB, WHALE_PROB);
 
             MinerParameters selfishMinerParams = {
                 0, std::to_string(0), selfishPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE

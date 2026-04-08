@@ -25,7 +25,7 @@ using std::placeholders::_2;
 
 bool shouldMine(const Miner &me, const Blockchain &blockchain, const Block &block);
 
-std::unique_ptr<Strategy> createGapStrategy(bool atomic, bool noiseInTransactions) {
+std::unique_ptr<Strategy> createGapStrategy(bool atomic, bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
     ParentSelectorFunc mineFunc;
     if (atomic) {
         mineFunc = defaultBlockToMineOnAtomic;
@@ -33,7 +33,7 @@ std::unique_ptr<Strategy> createGapStrategy(bool atomic, bool noiseInTransaction
         mineFunc = defaultBlockToMineOnNonAtomic;
     }
     
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     return std::make_unique<Strategy>("gap", mineFunc, valueFunc, shouldMine);    
 }
