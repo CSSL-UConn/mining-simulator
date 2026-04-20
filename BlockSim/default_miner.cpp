@@ -43,14 +43,25 @@ Block &defaultBlockToMineOnNonAtomic(const Miner &, const Blockchain &chain) {
 }
 
 Value defaultValueInMinedChild(const Blockchain &chain, const Block &mineHere,  bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
+
+
     auto minVal = mineHere.nextBlockReward();
     auto maxVal = chain.rem(mineHere) + mineHere.nextBlockReward() + mineHere.tip;
     
+     if (rawValue(maxVal) < rawValue(minVal)) {
+        maxVal = minVal;
+    }
+
     Value value = maxVal;
     if (noiseInTransactions) {
         value = valWithNoise(minVal, maxVal, whaleEnabled, whaleProb, whaleMultiplier);
     } else {
         value = valNoNoise(maxVal, whaleEnabled, whaleProb, whaleMultiplier);
     }
+
+    if (rawValue(value) < rawValue(minVal)) {
+        value = minVal;
+    }
+
     return value;
 }

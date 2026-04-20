@@ -18,6 +18,8 @@
 #include "BlockSim/game_result.hpp"
 #include "BlockSim/miner_result.hpp"
 #include "BlockSim/mining_style.hpp"
+#include "BlockSim/strategy_scheduler.hpp"
+#include "BlockSim/strategy_factory.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -28,12 +30,9 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <string>
+#include <stdexcept>
 
-
-#define NOISE_IN_TRANSACTIONS false
-#define WHALE_ENABLED false
-#define WHALE_PROB 0.05
-#define WHALE_MULT 3
 
 #define NETWORK_DELAY BlockTime(0)
 #define EXPECTED_NUMBER_OF_BLOCKS BlockCount(12096)
@@ -41,7 +40,7 @@
 #define LAMBERT_COEFF 0.13533528323661
 
 #define B BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
-#define TOTAL_BLOCK_VALUE BlockValue(Value(25) * SATOSHI_PER_BITCOIN)
+#define TOTAL_BLOCK_VALUE BlockValue(Value(30) * (SATOSHI_PER_BITCOIN))
 
 #define SEC_PER_BLOCK BlockRate(600)
 
@@ -49,21 +48,70 @@
 
 #define DAP_LENGTH 2016
 
+struct SimParams {
+    std::string suffix;
+    std::string strat1Name;
+    std::string strat2Name;
+    bool        noiseInTransactions;
+    bool        whaleEnabled;
+    double      whaleProb;
+    double      whaleMult;
+};
+
+static bool parseBool(const char *s, const char *argName) {
+    std::string v(s);
+    if (v == "1" || v == "true"  || v == "yes") return true;
+    if (v == "0" || v == "false" || v == "no")  return false;
+    throw std::invalid_argument(std::string("Invalid boolean value for ") + argName + ": " + v);
+}
+
+static SimParams parseArgs(int argc, const char *argv[]) {
+    // Expected: <exe> <suffix> <strat1> <strat2> <noise> <whale_enabled> <whale_prob> <whale_mult>
+    if (argc != 8) {
+        std::cerr << "Usage: " << argv[0]
+                  << " <output_suffix>"
+                  << " <strategy1_name>"
+                  << " <strategy2_name>"
+                  << " <noise_in_transactions:0|1>"
+                  << " <whale_enabled:0|1>"
+                  << " <whale_prob:float>"
+                  << " <whale_mult:float>"
+                  << std::endl;
+        std::cerr << "\nAvailable strategies: selfish, stubborn, publish1, publish2, publish3, "
+                     "honest, stubbornTrail, stubbornTrailFork"
+                  << std::endl;
+        exit(1);
+    }
+    SimParams p;
+    p.suffix               = argv[1];
+    p.strat1Name           = argv[2];
+    p.strat2Name           = argv[3];
+    p.noiseInTransactions  = parseBool(argv[4], "noise_in_transactions");
+    p.whaleEnabled         = parseBool(argv[5], "whale_enabled");
+    p.whaleProb            = std::stod(argv[6]);
+    p.whaleMult            = std::stod(argv[7]);
+    return p;
+}
+
 int main(int argc, const char *argv[]) {
 
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <output_suffix>" << std::endl;
-        return 1;
-    }
+    SimParams sp = parseArgs(argc, argv);
 
     int numberOfGames = 100;
 
     GAMEINFO("#####\nRunning Double Selfish Mining TTP Simulation\n#####" << std::endl);
+    GAMEINFO("Strat1=" << sp.strat1Name
+             << "  Strat2="          << sp.strat2Name
+             << "  noise="           << sp.noiseInTransactions
+             << "  whale="           << sp.whaleEnabled
+             << "  whaleProb="       << sp.whaleProb
+             << "  whaleMult="       << sp.whaleMult
+             << std::endl);
 
     // Output file 1: per-game summary
     std::ofstream plot;
     char filename[1024] = {0};
-    sprintf(filename, "%s_%s.txt", argv[0], argv[1]);
+    sprintf(filename, "%s.txt", sp.suffix.c_str());
     plot.open(filename);
     if (!plot.is_open()) {
         std::cerr << "Error opening file: " << filename << std::endl;
@@ -77,7 +125,7 @@ int main(int argc, const char *argv[]) {
     // Output file 2: per-DAP per-attacker revenue advantage curves
     std::ofstream dapDetail;
     char dapFilename[1024] = {0};
-    sprintf(dapFilename, "%s_%s_dap_detail.csv", argv[0], argv[1]);
+    sprintf(dapFilename, "%s_dap_detail.csv", sp.suffix.c_str());
     dapDetail.open(dapFilename);
     if (!dapDetail.is_open()) {
         std::cerr << "Error opening DAP detail file: " << dapFilename << std::endl;
@@ -92,9 +140,14 @@ int main(int argc, const char *argv[]) {
               << "rrr,seconds_per_block, orphan_rate"
               << std::endl;
 
-    for (double gammaVal = 0.0; gammaVal < 1.01; gammaVal += 0.01) {
+    const std::vector<double> gammaVals = {0.0, 0.25, 0.5, 0.75, 1.0};
 
-    for (double hashVal = 0.01; hashVal < .70; hashVal += .01) {
+    std::vector<double> hashVals;
+    for (double h = 0.05; h <= 0.70 + 1e-9; h += 0.05) hashVals.push_back(h);
+
+    for (double gammaVal : gammaVals) {
+
+    for (double hashVal : hashVals) {
 
         HashRate selfishPower1 = HashRate(hashVal / 2);
         HashRate selfishPower2 = HashRate(hashVal / 2);
@@ -108,9 +161,25 @@ int main(int argc, const char *argv[]) {
             std::function<Value(const Blockchain &, Value)> forkFunc(
                 std::bind(functionForkPercentage, _1, _2, 2));
 
-            auto defaultStrat  = createDefaultStubbornTrailStrategy(NOISE_IN_TRANSACTIONS, gammaVal, WHALE_ENABLED, WHALE_PROB, WHALE_PROB);
-            auto publishStrat  = createStubbornLeadTrailStrategy(NOISE_IN_TRANSACTIONS,1, WHALE_ENABLED, WHALE_PROB, WHALE_PROB);
-            auto publishStrat2 = createStubbornLeadTrailForkStrategy(NOISE_IN_TRANSACTIONS,1, WHALE_ENABLED, WHALE_PROB, WHALE_PROB);
+            auto strat1 = createStrategyByName(sp.strat1Name,
+                                               sp.noiseInTransactions,
+                                               gammaVal,
+                                               sp.whaleEnabled,
+                                               sp.whaleProb,
+                                               sp.whaleMult);
+
+            auto strat2 = createStrategyByName(sp.strat2Name,
+                                               sp.noiseInTransactions,
+                                               gammaVal,
+                                               sp.whaleEnabled,
+                                               sp.whaleProb,
+                                               sp.whaleMult);
+
+            auto defaultStrat = createDefaultStubbornTrailStrategy(sp.noiseInTransactions,
+                                                                    gammaVal,
+                                                                    sp.whaleEnabled,
+                                                                    sp.whaleProb,
+                                                                    sp.whaleProb);
 
             MinerParameters selfishMinerParams1 = {
                 0, std::to_string(0), selfishPower1, NETWORK_DELAY, COST_PER_SEC_TO_MINE
@@ -122,8 +191,8 @@ int main(int argc, const char *argv[]) {
                 2, std::to_string(2), honestPower, NETWORK_DELAY, COST_PER_SEC_TO_MINE
             };
 
-            miners.push_back(std::make_unique<Miner>(selfishMinerParams1, *publishStrat2));
-            miners.push_back(std::make_unique<Miner>(selfishMinerParams2, *publishStrat));
+            miners.push_back(std::make_unique<Miner>(selfishMinerParams1, *strat1));
+            miners.push_back(std::make_unique<Miner>(selfishMinerParams2, *strat2));
             miners.push_back(std::make_unique<Miner>(defaultMinerParams, *defaultStrat));
 
             MinerGroup minerGroup(std::move(miners));
@@ -136,8 +205,8 @@ int main(int argc, const char *argv[]) {
             minerGroup.resetOrder();
 
             std::vector<AttackerInfo> attackers;
-            attackers.emplace_back(0, rawRate(selfishPower1), "Selfish1");
-            attackers.emplace_back(1, rawRate(selfishPower2), "Selfish2");
+            attackers.emplace_back(0, rawRate(selfishPower1), "Attacker1");
+            attackers.emplace_back(1, rawRate(selfishPower2), "Attacker2");
 
             DAPTracker dapTracker(
                 DAP_LENGTH,
@@ -184,7 +253,7 @@ int main(int argc, const char *argv[]) {
                 const auto &pt  = curve[d];
                 const auto &dap = history[d];
 
-                double totalBlk = rawCount(dap.totalBlocksOnChain);
+                double totalBlk   = rawCount(dap.totalBlocksOnChain);
                 double totalMined = rawCount(dap.totalBlocksMined);
                 double orphanRate = (totalMined > 0) ? 1.0 - (totalBlk / totalMined) : 0.0;
 
@@ -212,7 +281,7 @@ int main(int argc, const char *argv[]) {
                               << m.cumulativeHonestCounterfactual << ","
                               << m.cumulativeRevenueAdvantage << ","
                               << m.rrr << ","
-                              << rawRate(dap.difficultyRate)<< ","
+                              << rawRate(dap.difficultyRate) << ","
                               << orphanRate
                               << std::endl;
                 }

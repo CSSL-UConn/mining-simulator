@@ -11,7 +11,7 @@
 #include "blockchain.hpp"
 #include "miner.hpp"
 #include "block.hpp"
-
+#include <iostream>
 #include <assert.h>
 
 MiningStyle::MiningStyle(ParentSelectorFunc parentSelectorFunc_, BlockValueFunc blockValueFunc_) :
@@ -22,7 +22,8 @@ MiningStyle::~MiningStyle() = default;
 std::unique_ptr<Block> MiningStyle::createBlock(Blockchain &blockchain, const Miner &miner) {
     auto &parent = parentSelectorFunc(miner, blockchain);
     auto value = blockValueFunc(blockchain, parent);
-    
+   
+
     assert(value >= parent.nextBlockReward());
     //assert(value <= parent.nextBlockReward() + blockchain.rem(parent));
     

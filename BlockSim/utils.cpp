@@ -48,12 +48,17 @@ Value valWithNoise(Value minVal, Value maxVal, bool whaleEnabled,
                    double whaleProb, double whaleMultiplier) {
     static std::random_device *rd = new std::random_device();
     static std::mt19937 gen((*rd)());
+
     std::uniform_int_distribution<ValueType> dis(
         ((rawValue(maxVal) - rawValue(minVal)) * 3) / 4 + rawValue(minVal),
         rawValue(maxVal)
     );
     Value base = Value(dis(gen));
-    return applyWhale(base, whaleEnabled, whaleProb, whaleMultiplier);
+    
+    Value val = applyWhale(base, whaleEnabled, whaleProb, whaleMultiplier);
+   
+    return val;
+
 }
 
 Value valNoNoise(Value val, bool whaleEnabled,
