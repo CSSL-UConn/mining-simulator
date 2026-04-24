@@ -13,8 +13,10 @@
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
+#include <chrono>
+#include <thread>
 
-DAPTracker::DAPTracker(int dapLength, size_t numMiners, std::vector<AttackerInfo> attackers , double blockReward, double txFeeRate): 
+DAPTracker::DAPTracker(int dapLength, size_t numMiners, std::vector<AttackerInfo> attackers, double blockReward, double txFeeRate): 
     _dapLength(dapLength),
     _numMiners(numMiners),
     _attackers(std::move(attackers)),
@@ -26,6 +28,8 @@ DAPTracker::DAPTracker(int dapLength, size_t numMiners, std::vector<AttackerInfo
 {
     _prevCostSnapshot.resize(numMiners, 0.0);
     _prevBlocksMinedSnapshot.resize(numMiners, BlockCount(0));
+    _runningAtkRevThisDAP.resize(_attackers.size(), 0.0);
+    _runningCumRA.resize(_attackers.size(), 0.0);
 }
 
 void DAPTracker::reset(BlockRate initialSecondsPerBlock) {
@@ -36,6 +40,8 @@ void DAPTracker::reset(BlockRate initialSecondsPerBlock) {
  
     _expectedBlockValue = _blockReward + _txFeeRate * static_cast<double>(rawRate(_baseSecondsPerBlock));
     std::fill(_prevCostSnapshot.begin(), _prevCostSnapshot.end(), 0.0);
+    std::fill(_runningAtkRevThisDAP.begin(), _runningAtkRevThisDAP.end(), 0.0);
+    std::fill(_runningCumRA.begin(),         _runningCumRA.end(),         0.0);
    
 }
 
@@ -70,6 +76,28 @@ bool DAPTracker::checkAndProcessDAP(Blockchain &blockchain, const MinerGroup &mi
 
         rebuildRevenueAdvantageCurve();
 
+        if (_epochMasterLog.is_open() || _epochRollingFile.is_open()) {
+            if (_epochWindow.size() >= 2) {
+                if (_epochMasterLog.is_open())
+                    writeEpochRow(_epochMasterLog,
+                                _epochWindow.front(),
+                                _revAdvantageCurve[_epochWindow.front().dapIndex]);
+                _epochWindow.pop_front();
+            }
+            _epochWindow.push_back(_dapHistory.back());
+            rewriteEpochRolling();
+        }
+
+
+        std::fill(_runningAtkRevThisDAP.begin(), _runningAtkRevThisDAP.end(), 0.0);
+        if (!_revAdvantageCurve.empty()) {
+            const auto &lastPt = _revAdvantageCurve.back();
+            for (size_t a = 0; a < _attackers.size(); a++)
+                _runningCumRA[a] = lastPt.attackerMetrics[a].cumulativeRevenueAdvantage;
+        }
+
+        flushBlockRolling();
+        pauseForAgent();
         applyDifficultyAdjustment(blockchain, _dapHistory.back());
 
 
@@ -315,4 +343,215 @@ void DAPTracker::snapShotCosts(const MinerGroup &minerGroup,
         _prevBlocksMinedSnapshot[i] = currentMined;
     }
     record.totalBlocksMined = totalMinedThisDAP;
+}
+
+void DAPTracker::setOutputBase(const std::string &base) {
+    _outputBase = base;
+
+    // Block rolling file (overwritten each block — open truncating)
+    _blockRollingFile.open(base + "block_rolling.csv", std::ios::trunc);
+    writeBlockHeader(_blockRollingFile);
+
+    // Block master log (append-only)
+    _blockMasterLog.open(base + "block_log.csv", std::ios::app);
+    if (_blockMasterLog.tellp() == 0)
+        writeBlockHeader(_blockMasterLog);
+
+    // Epoch rolling file
+    _epochRollingFile.open(base + "epoch_rolling.csv", std::ios::trunc);
+    writeEpochHeader(_epochRollingFile);
+
+    // Epoch master log
+    _epochMasterLog.open(base + "epoch_log.csv", std::ios::app);
+    if (_epochMasterLog.tellp() == 0)
+        writeEpochHeader(_epochMasterLog);
+}
+
+void DAPTracker::writeBlockHeader(std::ostream &os) const {
+    os << "block_height,timestamp,miner_id,block_value,seconds_per_block";
+    for (size_t a = 0; a < _attackers.size(); a++) {
+        std::string n = _attackers[a].name.empty()
+                        ? std::to_string(a) : _attackers[a].name;
+        os << "," << n << "_atk_rev_this_dap"
+           << "," << n << "_cumulative_ra";
+    }
+    os << "\n";
+}
+
+void DAPTracker::writeBlockRow(std::ostream &os, const BlockRecord &r) const {
+    os << rawHeight(r.height)    << ","
+       << rawTime(r.timestamp)   << ","
+       << r.minerId              << ","
+       << rawValue(r.blockValue) << ","
+       << rawRate(r.secondsPerBlock);
+    for (size_t a = 0; a < _attackers.size(); a++) {
+        os << "," << r.atkRevenueThisDAP[a]
+           << "," << r.cumulativeRA[a];
+    }
+    os << "\n";
+}
+
+void DAPTracker::rewriteBlockRolling() {
+    if (!_blockRollingFile.is_open()) return;
+    _blockRollingFile.seekp(0);
+    _blockRollingFile.clear();
+
+    // Truncate by closing and reopening
+    _blockRollingFile.close();
+    _blockRollingFile.open(_outputBase + "block_rolling.csv", std::ios::trunc);
+    writeBlockHeader(_blockRollingFile);
+    for (const auto &r : _blockWindow)
+        writeBlockRow(_blockRollingFile, r);
+    _blockRollingFile.flush();
+}
+
+void DAPTracker::recordBlock(Blockchain &blockchain, const MinerGroup &minerGroup) {
+    if (_outputBase.empty()) return;
+
+    BlockHeight height    = blockchain.getMaxHeightPub();
+    BlockTime   timestamp = blockchain.getTime();
+    BlockRate   spb       = blockchain.getSecondsPerBlock();
+
+    int minerId = -1;
+    Value blockVal(0);
+    const Block &head = blockchain.winningHead();
+    if (head.height == height && head.miner != nullptr) {
+        blockVal = head.value;
+        for (size_t i = 0; i < minerGroup.miners.size(); i++) {
+            if (head.minedBy(minerGroup.miners[i].get())) {
+                minerId = static_cast<int>(i);
+                break;
+            }
+        }
+    }
+
+    if (minerId >= 0) {
+        for (size_t a = 0; a < _attackers.size(); a++) {
+            if (_attackers[a].minerIndex == static_cast<size_t>(minerId)) {
+                _runningAtkRevThisDAP[a] += rawValue(blockVal);
+            }
+        }
+    }
+
+    BlockRecord rec;
+    rec.height            = height;
+    rec.timestamp         = timestamp;
+    rec.minerId           = minerId;
+    rec.blockValue        = blockVal;
+    rec.secondsPerBlock   = spb;
+    rec.atkRevenueThisDAP = _runningAtkRevThisDAP;
+    rec.cumulativeRA      = _runningCumRA;
+
+    if (_blockWindow.size() >= 200) {
+    _blockMasterBuffer.push_back(_blockWindow.front());
+    _blockWindow.pop_front();
+    }
+
+    _blockWindow.push_back(rec);
+   
+}
+
+void DAPTracker::writeEpochHeader(std::ostream &os) const {
+    os << "dap_index,start_height,end_height,start_time,end_time,"
+       << "total_blocks_on_chain,total_blocks_mined,seconds_per_block";
+    for (size_t a = 0; a < _attackers.size(); a++) {
+        std::string n = _attackers[a].name.empty()
+                        ? std::to_string(a) : _attackers[a].name;
+        os << "," << n << "_atk_blocks"
+           << "," << n << "_atk_revenue"
+           << "," << n << "_honest_cf"
+           << "," << n << "_ra_this_dap"
+           << "," << n << "_cumulative_ra"
+           << "," << n << "_rrr";
+    }
+    os << "\n";
+}
+
+
+void DAPTracker::writeEpochRow(std::ostream &os, const DAPRecord &d,
+                                const RevenueAdvantagePoint &pt) const {
+    os << d.dapIndex                      << ","
+       << rawHeight(d.startHeight)        << ","
+       << rawHeight(d.endHeight)          << ","
+       << rawTime(d.startTime)            << ","
+       << rawTime(d.endTime)              << ","
+       << rawCount(d.totalBlocksOnChain)  << ","
+       << rawCount(d.totalBlocksMined)    << ","
+       << rawRate(d.difficultyRate);
+    for (size_t a = 0; a < _attackers.size(); a++) {
+        const auto &m = pt.attackerMetrics[a];
+        os << "," << m.atkBlocksThisDAP
+           << "," << m.atkRevenueThisDAP
+           << "," << m.honestCounterfactualThisDAP
+           << "," << m.revenueAdvantageThisDAP
+           << "," << m.cumulativeRevenueAdvantage
+           << "," << m.rrr;
+    }
+    os << "\n";
+}
+
+
+void DAPTracker::rewriteEpochRolling() {
+    if (!_epochRollingFile.is_open()) return;
+    _epochRollingFile.close();
+    _epochRollingFile.open(_outputBase + "epoch_rolling.csv", std::ios::trunc);
+    writeEpochHeader(_epochRollingFile);
+    for (const auto &d : _epochWindow) {
+        int idx = d.dapIndex;
+        if (idx < static_cast<int>(_revAdvantageCurve.size()))
+            writeEpochRow(_epochRollingFile, d, _revAdvantageCurve[idx]);
+    }
+    _epochRollingFile.flush();
+}
+
+void DAPTracker::pauseForAgent() {
+    if (_outputBase.empty()) return;
+
+    const std::string lockPath = "Claude/sim_pause.lock";
+    const int timeoutSeconds   = 30;
+    const int pollMs           = 200;
+
+    {
+        std::ofstream lock(lockPath);
+        if (!lock.is_open()) {
+            std::cerr << "[agent] Warning: could not create sim_pause.lock\n";
+            return;
+        }
+    }
+
+    std::cerr << "[agent] Epoch " << _currentDAP
+              << " closed — pausing for agent (max " << timeoutSeconds << "s)...\n";
+
+    auto start = std::chrono::steady_clock::now();
+
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(pollMs));
+        std::ifstream check(lockPath);
+        if (!check.is_open()) {
+            std::cerr << "[agent] Lock released — resuming sim.\n";
+            return;
+        }
+        check.close();
+
+        auto elapsed = std::chrono::steady_clock::now() - start;
+        if (std::chrono::duration_cast<std::chrono::seconds>(elapsed).count()
+                >= timeoutSeconds) {
+            std::cerr << "[agent] Timeout waiting for agent — resuming anyway.\n";
+
+            std::remove(lockPath.c_str());
+            return;
+        }
+    }
+}
+
+void DAPTracker::flushBlockRolling() {
+    if (_blockMasterLog.is_open()) {
+        for (const auto &r : _blockMasterBuffer)
+            writeBlockRow(_blockMasterLog, r);
+        _blockMasterBuffer.clear();
+        _blockMasterLog.flush();
+    }
+    if (_epochMasterLog.is_open())
+        _epochMasterLog.flush();
+    rewriteBlockRolling();
 }

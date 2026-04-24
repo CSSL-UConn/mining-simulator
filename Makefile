@@ -88,6 +88,11 @@ double-strat-rational: DoubleStratRationalSim/main.cpp $(OBJS)
 double-strat: DoubleStratSim/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL) $(LDLIBS)
 
+# Agent-based Minner
+
+agent-multi: AgentMulti/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL) $(LDLIBS)
+
 %.o: %.cpp
 	$(CPP) $(CPPFLAGS) $(INC) $(IGSL) $(IBLAS) $(LGSL) $(LBLAS) $(LDLIBS) -o $@ -c $<
 

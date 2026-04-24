@@ -76,6 +76,13 @@ public:
                   const std::vector<std::string>& validStrategyNames,
                   std::string& errorMessage) const;
     
+    // add entry
+    void addEntry(unsigned int minerId, int startBlock, int endBlock, const std::string& strategyName, double gamma = -1.0) {
+    StrategyChange change(minerId, BlockHeight(startBlock), BlockHeight(endBlock), strategyName, gamma);
+    schedule.push_back(change);
+    minerSchedules[minerId].push_back(change);
+}             
+
     // Reset scheduler
     void reset();
     

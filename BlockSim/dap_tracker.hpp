@@ -9,6 +9,10 @@
 #include <vector>
 #include <functional>
 #include <iostream>
+#include <fstream>
+#include <deque>
+#include <string>
+
  
 class Blockchain;
 class Miner;
@@ -80,6 +84,16 @@ struct RevenueAdvantagePoint {
     RevenueAdvantagePoint() : dapIndex(0) {}
 };
 
+struct BlockRecord {
+    BlockHeight height;
+    BlockTime   timestamp;
+    int         minerId;     
+    Value       blockValue;
+    BlockRate   secondsPerBlock;
+    // per-attacker running totals (indexed by attacker order)
+    std::vector<double> atkRevenueThisDAP;
+    std::vector<double> cumulativeRA;
+};
 
 // to be used by external code to make decisions (e.g., strategy scheduler)
 using DAPBoundaryCallback = std::function<void(
@@ -93,6 +107,8 @@ class DAPTracker {
 
     // Set Up (Note: attackerAlpha is the combined hashrate of all attackers--assumed to be symmetric)
     DAPTracker(int dapLength, size_t numMiners,std::vector<AttackerInfo> attackers, double blockReward, double txFeeRate);
+
+    void flushBlockRolling();
 
     void reset(BlockRate initialSecondsPerBlock);
 
@@ -115,6 +131,9 @@ class DAPTracker {
         _boundaryCallback = std::move(cb);
     }
 
+    void setOutputBase(const std::string &base);
+    void recordBlock(Blockchain &blockchain, const MinerGroup &minerGroup);
+
     // Output 
     void printSummary(std::ostream &os) const;
 
@@ -125,9 +144,26 @@ class DAPTracker {
     const std::vector<RevenueAdvantagePoint> &revenueAdvantageCurve() const {
     return _revAdvantageCurve;
     }
+
+     ~DAPTracker() {
+    if (_blockRollingFile.is_open()) _blockRollingFile.close();
+    if (_blockMasterLog.is_open())   _blockMasterLog.close();
+    if (_epochRollingFile.is_open()) _epochRollingFile.close();
+    if (_epochMasterLog.is_open())   _epochMasterLog.close();
+}
+
     private:
 
-    
+    std::string _outputBase;
+    std::deque<BlockRecord>  _blockWindow;   // max 200
+    std::deque<DAPRecord>    _epochWindow;   // max 2
+   
+
+    std::ofstream _blockRollingFile;
+    std::ofstream _blockMasterLog;
+    std::ofstream _epochRollingFile;
+    std::ofstream _epochMasterLog;
+
     void recomputeAllDAPs(const Blockchain &blockchain, const MinerGroup &minerGroup);
 
     void snapShotCosts(const MinerGroup &minerGroup, DAPRecord &record);
@@ -147,12 +183,29 @@ class DAPTracker {
     int _currentDAP;
     BlockRate _baseSecondsPerBlock;
 
+    std::vector<BlockRecord> _blockMasterBuffer;
     std::vector<double> _prevCostSnapshot;
     std::vector<BlockCount> _prevBlocksMinedSnapshot; 
     std::vector<DAPRecord> _dapHistory;
 
     std::vector<RevenueAdvantagePoint> _revAdvantageCurve;
     DAPBoundaryCallback _boundaryCallback;
+    std::vector<double> _runningAtkRevThisDAP;
+    std::vector<double> _runningCumRA;  
+
+    void writeBlockHeader(std::ostream &os) const;
+    void writeBlockRow(std::ostream &os, const BlockRecord &r) const;
+    void writeEpochHeader(std::ostream &os) const;
+    void writeEpochRow(std::ostream &os, const DAPRecord &d,
+                    const RevenueAdvantagePoint &pt) const;
+    void rewriteBlockRolling();
+    void rewriteEpochRolling();
+
+    void pauseForAgent();
+
+   
 };
+
+
 
 #endif /* dap_tracker_hpp */

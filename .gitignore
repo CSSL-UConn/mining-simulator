@@ -4,3 +4,5 @@
 TemporalOutputs/
 TemporalInputs/
 Helper/
+*.vscode
+*.env
