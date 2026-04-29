@@ -369,10 +369,13 @@ void DAPTracker::setOutputBase(const std::string &base) {
 
 void DAPTracker::writeBlockHeader(std::ostream &os) const {
     os << "block_height,timestamp,miner_id,block_value,seconds_per_block";
+    for (size_t i = 0; i < _numMiners; i++)
+    os << ",gamma_miner" << i;
     for (size_t a = 0; a < _attackers.size(); a++) {
         std::string n = _attackers[a].name.empty()
                         ? std::to_string(a) : _attackers[a].name;
-        os << "," << n << "_atk_rev_this_dap"
+        os << "," << n << "_alpha"
+        << "," << n << "_atk_rev_this_dap"
            << "," << n << "_cumulative_ra";
     }
     os << "\n";
@@ -384,8 +387,14 @@ void DAPTracker::writeBlockRow(std::ostream &os, const BlockRecord &r) const {
        << r.minerId              << ","
        << rawValue(r.blockValue) << ","
        << rawRate(r.secondsPerBlock);
+
+    for (size_t i = 0; i < _numMiners; i++) {
+        double g = (i < r.gammaPerMiner.size()) ? r.gammaPerMiner[i] : -1.0;
+        os << "," << g;
+    }
     for (size_t a = 0; a < _attackers.size(); a++) {
-        os << "," << r.atkRevenueThisDAP[a]
+        os << "," << r.alphas[a] 
+        << "," << r.atkRevenueThisDAP[a]
            << "," << r.cumulativeRA[a];
     }
     os << "\n";
@@ -441,6 +450,11 @@ void DAPTracker::recordBlock(Blockchain &blockchain, const MinerGroup &minerGrou
     rec.secondsPerBlock   = spb;
     rec.atkRevenueThisDAP = _runningAtkRevThisDAP;
     rec.cumulativeRA      = _runningCumRA;
+    rec.gammaPerMiner = _gammaPerMiner;
+    rec.alphas.resize(_attackers.size());
+    for (size_t a = 0; a < _attackers.size(); a++) {
+        rec.alphas[a] = _attackers[a].alpha;
+    }
 
     if (_blockWindow.size() >= 200) {
     _blockMasterBuffer.push_back(_blockWindow.front());

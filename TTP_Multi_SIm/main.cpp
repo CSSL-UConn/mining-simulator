@@ -78,7 +78,7 @@ static SimParams parseArgs(int argc, const char *argv[]) {
                   << " <whale_mult:float>"
                   << std::endl;
         std::cerr << "\nAvailable strategies: selfish, stubborn, publish1, publish2, publish3, "
-                     "honest, stubbornTrail, stubbornTrailFork"
+                     "honest, stubborn-trail, stubborn-fork, stubborn-lead, stubborn-lead-fork stubborn-trail-fork, stubborn-lead-trail-fork"
                   << std::endl;
         exit(1);
     }

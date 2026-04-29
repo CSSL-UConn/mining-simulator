@@ -66,7 +66,7 @@ public:
     // Get all strategy changes that should occur at this block height
     std::vector<StrategyChange> getChangesAtHeight(BlockHeight height) const;
     
-    double getConnectivityAtHeight(BlockHeight height) const;
+    double getConnectivityAtHeight(unsigned int minerId, BlockHeight height) const;
 
     // Get the active strategy for a miner at a given height
     std::string getActiveStrategy(unsigned int minerId, BlockHeight height) const;

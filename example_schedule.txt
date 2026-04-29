@@ -1,17 +1,21 @@
 # Strategy Schedule File for Dynamic Switching Tests
 # Format: miner_id, start_block, end_block, strategy_name
 #
-# This schedule is for 20,000 block simulations
+# This schedule is for 24,192 block simulations
 # Miner 0 switches strategies dynamically
 # Miner 1 uses default-selfish (gamma-aware honest miner)
 
+NOISY_TRANSACTION, true
+WHALE_ENABLED, true
+WHALE_PROB, 0.05
+WHALE_MULTIPLIER, 4.0
+
 # Miner 0: Dynamic strategy switching
-0, 0, 6666, selfish,-1
-0, 6667, 13333, stubborn-trail, -1
-0, 13334, 24192, selfish, -1
+0, 0,  24192, selfish,-1
+
 
 1, 0, 24192, selfish,-1
 
 # Miner 1: Gamma-aware honest miner (required for selfish mining to work!)
-2, 0, 9999, default-selfish 0.6
-2, 10000, 24192, default-selfish, 0.6
+2, 0, 9999, default-selfish, 0.5
+2, 10000, 24192, default-selfish, 0.8

@@ -90,9 +90,11 @@ struct BlockRecord {
     int         minerId;     
     Value       blockValue;
     BlockRate   secondsPerBlock;
+    std::vector<double> gammaPerMiner;
     // per-attacker running totals (indexed by attacker order)
     std::vector<double> atkRevenueThisDAP;
     std::vector<double> cumulativeRA;
+    std::vector<double> alphas; 
 };
 
 // to be used by external code to make decisions (e.g., strategy scheduler)
@@ -122,6 +124,12 @@ class DAPTracker {
 
     const std::vector<AttackerInfo> &attackers() const { return _attackers; }
     
+    void setGamma(size_t minerId, double gamma) {
+    if (minerId >= _gammaPerMiner.size())
+        _gammaPerMiner.resize(minerId + 1, -1.0);
+    _gammaPerMiner[minerId] = gamma;
+}
+    double getGamma(size_t minerId) const { return  _gammaPerMiner[minerId]; }
 
     const std::vector<DAPRecord> &history() const {return _dapHistory; }
 
@@ -138,6 +146,11 @@ class DAPTracker {
     void printSummary(std::ostream &os) const;
 
     void finalize(Blockchain &blockchain, const MinerGroup &minerGroup); 
+
+    void updateAttackerAlpha(size_t attackerIndex, double newAlpha) {
+    if (attackerIndex < _attackers.size())
+        _attackers[attackerIndex].alpha = newAlpha;
+}
 
     bool checkAndProcessDAP(Blockchain &blockchain, const MinerGroup &minerGroup); 
 
@@ -179,6 +192,7 @@ class DAPTracker {
     double _blockReward;
     double _txFeeRate;
     double _expectedBlockValue;
+    std::vector<double> _gammaPerMiner;
 
     int _currentDAP;
     BlockRate _baseSecondsPerBlock;

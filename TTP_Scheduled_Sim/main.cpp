@@ -161,6 +161,10 @@ int main(int argc, const char *argv[]) {
                 auto blockchain = std::make_unique<Blockchain>(blockchainSettings);
                 minerGroup.reset(*blockchain);
                 minerGroup.resetOrder();
+
+                double lastAppliedGamma0 = -999.0;
+                double lastAppliedGamma1 = -999.0;
+                
                 std::vector<AttackerInfo> attackers;
                 attackers.emplace_back(0, hashVal, "Miner-0");
 
@@ -190,47 +194,56 @@ int main(int argc, const char *argv[]) {
                     
                     bool strategyChanged = false;
                     
+                    // Miner 0
                     if(newMiner0Strategy == "default-selfish") {
-                        double gamma = scheduler.getConnectivityAtHeight(currentHeight); 
-                        if(gamma != -1.0) {
-                            GAMEINFO("Block " << currentHeight << ": Miner 0 switching  default-selfish's gamma to " 
+                        double gamma = scheduler.getConnectivityAtHeight(0, currentHeight);
+                        bool strategyJustChanged = (newMiner0Strategy != miner0Strategy);
+                        bool gammaChanged = (gamma != -1.0 && gamma != lastAppliedGamma0);
+                        if(strategyJustChanged || gammaChanged) {
+                            double effectiveGamma = (gamma != -1.0) ? gamma : 0.0;
+                            GAMEINFO("Block " << currentHeight << ": Miner 0 switching default-selfish's gamma to " 
                                  << gamma << std::endl);
                             std::string key = "default-selfish-0" + std::to_string(rawHeight(currentHeight));  
-                            strategyPool[key] = createDefaultSelfishStrategy(scheduler.noisyTransaction, gamma, scheduler.whaleEnabled,
-        scheduler.whaleProb,
-        scheduler.whaleMultiplier); 
-                            minerGroup.getMiner(0).changeStrategy(*strategyPool["default-selfish"], *blockchain);
+                            strategyPool[key] = createDefaultSelfishStrategy(scheduler.noisyTransaction, effectiveGamma,scheduler.whaleEnabled, scheduler.whaleProb, scheduler.whaleMultiplier);
+                            minerGroup.getMiner(0).changeStrategy(*strategyPool[key], *blockchain);
                             miner0Strategy = newMiner0Strategy;
+                            lastAppliedGamma0 = effectiveGamma;
                             strategyChanged = true;
+                            dapTracker.setGamma(0, effectiveGamma);
                         }
                     } else if (newMiner0Strategy != miner0Strategy) {
-                        GAMEINFO("Block " << currentHeight << ": Miner 0 switching from " 
-                                 << miner0Strategy << " to " << newMiner0Strategy << std::endl);
+                        GAMEINFO("Block " << currentHeight << ": Miner 0 switching from "
+                                << miner0Strategy << " to " << newMiner0Strategy << std::endl);
                         minerGroup.getMiner(0).changeStrategy(*strategyPool[newMiner0Strategy], *blockchain);
                         miner0Strategy = newMiner0Strategy;
                         strategyChanged = true;
-                    }
-                  
-                    if(newMiner1Strategy == "default-selfish") {
-                        double gamma = scheduler.getConnectivityAtHeight(currentHeight);
-                        if (gamma != -1.0) {
-                            GAMEINFO("Block " << currentHeight << ": Miner 1 switching  default-selfish's gamma to " 
-                                 << gamma << std::endl);
-                            std::string key = "default-selfish-1" + std::to_string(rawHeight(currentHeight)); 
-                            strategyPool[key] = createDefaultSelfishStrategy(scheduler.noisyTransaction, gamma, scheduler.whaleEnabled,
-        scheduler.whaleProb,
-        scheduler.whaleMultiplier);
-                            minerGroup.getMiner(1).changeStrategy(*strategyPool["default-selfish"], *blockchain);
-                            miner1Strategy = newMiner1Strategy;
-                            strategyChanged = true;
-                        }
-                    } else if (newMiner1Strategy != miner1Strategy) {
-                        GAMEINFO("Block " << currentHeight << ": Miner 1 switching from " 
-                                 << miner1Strategy << " to " << newMiner1Strategy << std::endl);
-                        minerGroup.getMiner(1).changeStrategy(*strategyPool[newMiner1Strategy], *blockchain);  
+}
+    
+                // Miner 1
+                if (newMiner1Strategy == "default-selfish") {
+                    double gamma = scheduler.getConnectivityAtHeight(1, currentHeight);
+                    bool strategyJustChanged = (newMiner1Strategy != miner1Strategy);
+                    bool gammaChanged = (gamma != -1.0 && gamma != lastAppliedGamma1);
+                    if (strategyJustChanged || gammaChanged) {
+                        double effectiveGamma = (gamma != -1.0) ? gamma : 0.0;
+                        GAMEINFO("Block " << currentHeight << ": Miner 1 switching default-selfish's gamma to "
+                            << effectiveGamma << std::endl);
+                        std::string key = "default-selfish-1-" + std::to_string(rawHeight(currentHeight));
+                        strategyPool[key] = createDefaultSelfishStrategy(scheduler.noisyTransaction, effectiveGamma,
+                            scheduler.whaleEnabled, scheduler.whaleProb, scheduler.whaleMultiplier);
+                        minerGroup.getMiner(1).changeStrategy(*strategyPool[key], *blockchain);
                         miner1Strategy = newMiner1Strategy;
+                        lastAppliedGamma1 = effectiveGamma;
                         strategyChanged = true;
+                        dapTracker.setGamma(1, effectiveGamma);
                     }
+                } else if (newMiner1Strategy != miner1Strategy) {
+                    GAMEINFO("Block " << currentHeight << ": Miner 1 switching from "
+                            << miner1Strategy << " to " << newMiner1Strategy << std::endl);
+                    minerGroup.getMiner(1).changeStrategy(*strategyPool[newMiner1Strategy], *blockchain);
+                    miner1Strategy = newMiner1Strategy;
+                    strategyChanged = true;
+                }
                     
                     if (strategyChanged) {
                         minerGroup.resetOrder();

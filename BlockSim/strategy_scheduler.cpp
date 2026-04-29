@@ -106,8 +106,8 @@ bool StrategyScheduler::loadFromFile(const std::string& filename) {
             std::string strategyName = tokens[3];
 
             //Handle optional gamma
-            double gamma = -1.0;
-            if (!tokens[4].empty()) {
+           double gamma = -1.0;
+            if (tokens.size() >= 5 && !tokens[4].empty()) {
                 gamma = std::stod(tokens[4]);
             }
             
@@ -152,10 +152,12 @@ double StrategyScheduler::getCurrentFeeMultiplier(BlockHeight height) const {
     return multiplier;
 }
 
-double StrategyScheduler::getConnectivityAtHeight(BlockHeight height) const {
-    // Find honest mining connectivity at block height
-    for (const auto& change : schedule) {
-        if (rawHeight(change.startBlock) == rawHeight(height) && change.gamma >= 0 && change.strategyName == "default-selfish") {
+double StrategyScheduler::getConnectivityAtHeight(unsigned int minerId, BlockHeight height) const {
+    auto it = minerSchedules.find(minerId);
+    if (it == minerSchedules.end()) return -1.0;
+
+    for (const auto& change : it->second) {
+        if (change.contains(height) && change.gamma >= 0.0 && change.strategyName == "default-selfish") {
             return change.gamma;
         }
     }

@@ -42,26 +42,30 @@ Block &defaultBlockToMineOnNonAtomic(const Miner &, const Blockchain &chain) {
     return chain.oldest(chain.getMaxHeightPub());
 }
 
-Value defaultValueInMinedChild(const Blockchain &chain, const Block &mineHere,  bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
-
-
-    auto minVal = mineHere.nextBlockReward();
-    auto maxVal = chain.rem(mineHere) + mineHere.nextBlockReward() + mineHere.tip;
+Value defaultValueInMinedChild(const Blockchain &chain, const Block &mineHere,
+                                bool noiseInTransactions, bool whaleEnabled,
+                                double whaleProb, double whaleMultiplier) {
+    auto reward = mineHere.nextBlockReward();
+    auto feesAndTip = chain.rem(mineHere) + mineHere.tip;  
     
-     if (rawValue(maxVal) < rawValue(minVal)) {
-        maxVal = minVal;
+    if (rawValue(feesAndTip) < Value(0)) {
+        feesAndTip = Value(0);
     }
 
-    Value value = maxVal;
+    Value feeValue;
     if (noiseInTransactions) {
-        value = valWithNoise(minVal, maxVal, whaleEnabled, whaleProb, whaleMultiplier);
+        auto minFees = Value(0);
+        auto maxFees = feesAndTip;
+        if (rawValue(maxFees) < rawValue(minFees)) maxFees = minFees;
+        feeValue = valWithNoise(minFees, maxFees, whaleEnabled, whaleProb, whaleMultiplier);
     } else {
-        value = valNoNoise(maxVal, whaleEnabled, whaleProb, whaleMultiplier);
+        feeValue = valNoNoise(feesAndTip, whaleEnabled, whaleProb, whaleMultiplier);
     }
 
-    if (rawValue(value) < rawValue(minVal)) {
-        value = minVal;
-    }
+    Value value = reward + feeValue;
 
+    if (rawValue(value) < rawValue(reward)) {
+        value = reward;
+    }
     return value;
 }
