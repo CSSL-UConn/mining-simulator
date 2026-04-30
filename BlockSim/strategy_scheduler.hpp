@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <optional>
 
 class Strategy;
 
@@ -21,9 +22,10 @@ struct StrategyChange {
     BlockHeight startBlock;
     BlockHeight endBlock;
     std::string strategyName;
+    double gamma;
     
-    StrategyChange(unsigned int id, BlockHeight start, BlockHeight end, std::string name)
-        : minerId(id), startBlock(start), endBlock(end), strategyName(name) {}
+    StrategyChange(unsigned int id, BlockHeight start, BlockHeight end, std::string name, double connectivity)
+        : minerId(id), startBlock(start), endBlock(end), strategyName(name), gamma(connectivity) {}
     
     // Check if this change contains a specific block height
     bool contains(BlockHeight height) const {
@@ -38,20 +40,34 @@ struct StrategyChange {
     }
 };
 
+struct FeeBreakpoint {
+    BlockHeight BlockHeight;
+    double multiplier;
+};
 class StrategyScheduler {
 private:
     std::vector<StrategyChange> schedule;
     std::map<unsigned int, std::vector<StrategyChange>> minerSchedules;  // Indexed by miner
+    std::vector<FeeBreakpoint> feeSchedule;
     
 public:
     StrategyScheduler();
     
     // Load schedule from file (new format: miner_id, start_block, end_block, strategy_name)
     bool loadFromFile(const std::string& filename);
+    double getCurrentFeeMultiplier(BlockHeight height) const;
+
+    bool noisyTransaction = false;
+    bool whaleEnabled = false;
+    double whaleProb = 0.05;
+    double whaleMultiplier = 3.0;
+    
     
     // Get all strategy changes that should occur at this block height
     std::vector<StrategyChange> getChangesAtHeight(BlockHeight height) const;
     
+    double getConnectivityAtHeight(BlockHeight height) const;
+
     // Get the active strategy for a miner at a given height
     std::string getActiveStrategy(unsigned int minerId, BlockHeight height) const;
     
@@ -60,6 +76,13 @@ public:
                   const std::vector<std::string>& validStrategyNames,
                   std::string& errorMessage) const;
     
+    // add entry
+    void addEntry(unsigned int minerId, int startBlock, int endBlock, const std::string& strategyName, double gamma = -1.0) {
+    StrategyChange change(minerId, BlockHeight(startBlock), BlockHeight(endBlock), strategyName, gamma);
+    schedule.push_back(change);
+    minerSchedules[minerId].push_back(change);
+}             
+
     // Reset scheduler
     void reset();
     
