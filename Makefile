@@ -86,6 +86,10 @@ double-strat-rational: DoubleStratRationalSim/main.cpp $(OBJS)
 double-strat: DoubleStratSim/main.cpp $(OBJS)
 	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
 
+# TTP 3-Miner Scheduled Simulation (with incentive strategy support)
+ttp-scheduler-3miner: TTP_Scheduled_3Miner_Sim/main.cpp $(OBJS)
+	$(CPP) $(CPPFLAGS)  $(INC) $(IGSL) $(IBLAS)  -o $@ $^ $(LBLAS) $(LGSL)
+
 %.o: %.cpp
 	$(CPP) $(CPPFLAGS) $(INC) $(IGSL) $(IBLAS) $(LGSL) $(LBLAS) $(LDLIBS) -o $@ -c $<
 
