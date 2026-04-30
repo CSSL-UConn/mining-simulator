@@ -7,7 +7,7 @@
 //
 
 #include "utils.hpp"
-
+#include <iostream>
 #include <random>
 
 inline std::mt19937& getGen() {
@@ -34,10 +34,34 @@ BlockTime selectMiningOffset(TimeRate mean) {
     return BlockTime(dis(getGen()));
 }
 
-Value valWithNoise(Value minVal, Value maxVal) {
+static Value applyWhale(Value val, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
+    if (!whaleEnabled) return val;
+    if (selectRandomChance() < whaleProb) {
+        double scaled = static_cast<double>(rawValue(val)) * whaleMultiplier;
+        scaled = std::min(scaled, static_cast<double>(std::numeric_limits<ValueType>::max()));
+        return Value(static_cast<ValueType>(scaled));
+    }
+    return val;
+}
+
+Value valWithNoise(Value minVal, Value maxVal, bool whaleEnabled, 
+                   double whaleProb, double whaleMultiplier) {
     static std::random_device *rd = new std::random_device();
     static std::mt19937 gen((*rd)());
+
+    std::uniform_int_distribution<ValueType> dis(
+        ((rawValue(maxVal) - rawValue(minVal)) * 3) / 4 + rawValue(minVal),
+        rawValue(maxVal)
+    );
+    Value base = Value(dis(gen));
     
-    std::uniform_int_distribution<ValueType> dis(((rawValue(maxVal) - rawValue(minVal)) * 3) / 4 + rawValue(minVal), rawValue(maxVal));
-    return Value(dis(gen));   //random between 75% maxVal and minVal
+    Value val = applyWhale(base, whaleEnabled, whaleProb, whaleMultiplier);
+   
+    return val;
+
+}
+
+Value valNoNoise(Value val, bool whaleEnabled,
+                 double whaleProb, double whaleMultiplier) {
+    return applyWhale(val, whaleEnabled, whaleProb, whaleMultiplier);
 }
