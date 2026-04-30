@@ -44,7 +44,9 @@ public:
     void reset(BlockchainSettings blockchainSettings);
 
     void publishBlock(std::unique_ptr<Block> block);
-    
+   
+    void updateFeeMultiplier(double multiplier);
+
     const std::vector<const Block *> getHeads() const;
     void printBlockchain() const;
     void printHeads() const;
@@ -73,9 +75,13 @@ public:
     inline Value getTotalFees() const {
         return valueNetworkTotal;
     }
+    BlockRate getSecondsPerBlock() const { return secondsPerBlock; }
+    void setSecondsPerBlock(BlockRate newRate) {secondsPerBlock = newRate;}
     
+   
     BlockValue expectedBlockSize() const;
     TimeRate chanceToWin(HashRate hashRate) const;
+    TimeRate baseFeeRate;
     
     Value gap(BlockHeight i) const;
     Value rem(const Block &block) const;
