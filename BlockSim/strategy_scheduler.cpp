@@ -59,13 +59,13 @@ bool StrategyScheduler::loadFromFile(const std::string& filename) {
                 continue;
             }
             FeeBreakpoint bp; 
-            bp.BlockHeight = BlockHeight(std::stoul(tokens[1]));
+            bp.height = BlockHeight(std::stoul(tokens[1]));
             bp.multiplier = std::stod(tokens[2]);
             feeSchedule.push_back(bp);
             std::sort(feeSchedule.begin(), feeSchedule.end(), [](const FeeBreakpoint& a, const FeeBreakpoint& b) {
-                    return a.BlockHeight < b.BlockHeight;
+                    return a.height < b.height;
                 });
-            std::cout << "Fee change at block " << rawHeight(bp.BlockHeight) 
+            std::cout << "Fee change at block " << rawHeight(bp.height) 
                       << ": multiplier=" << bp.multiplier << std::endl;
             continue;
         }
@@ -143,7 +143,7 @@ bool StrategyScheduler::loadFromFile(const std::string& filename) {
 double StrategyScheduler::getCurrentFeeMultiplier(BlockHeight height) const {
     double multiplier = 1.0;
     for (const auto& bp: feeSchedule) {
-        if (height >= bp.BlockHeight) {
+        if (height >= bp.height) {
             multiplier = bp.multiplier; 
         } else {
             break;

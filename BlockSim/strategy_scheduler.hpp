@@ -41,7 +41,7 @@ struct StrategyChange {
 };
 
 struct FeeBreakpoint {
-    BlockHeight BlockHeight;
+    BlockHeight height;
     double multiplier;
 };
 class StrategyScheduler {
