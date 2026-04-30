@@ -29,7 +29,7 @@ protected:
     virtual BlockHeight heightToPublish(const Blockchain &blockchain, const Miner &me, std::vector<std::unique_ptr<Block>> &unpublishedBlocks) const;
 };
 
-std::unique_ptr<Strategy> createPublishNStrategy(bool noiseInTransactions, Value buildLimit);
+std::unique_ptr<Strategy> createPublishNStrategy(bool noiseInTransactions, Value buildLimit, bool whaleEnabled, double whaleProb, double whaleMultiplier);
 Block &PublishNBlockToMineOn(const Miner &me, const Blockchain &blockchain);
 
 #endif /* publish_n_miner_hpp */

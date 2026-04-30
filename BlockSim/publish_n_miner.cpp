@@ -22,8 +22,8 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-std::unique_ptr<Strategy> createPublishNStrategy(bool noiseInTransactions, Value buildLimit) {
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+std::unique_ptr<Strategy> createPublishNStrategy(bool noiseInTransactions, Value buildLimit, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     return std::make_unique<Strategy>("publishn", PublishNBlockToMineOn, valueFunc, std::make_unique<PublishNPublishingStyle>(buildLimit));
 }

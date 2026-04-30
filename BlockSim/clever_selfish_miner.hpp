@@ -19,6 +19,6 @@ public:
     CleverSelfishPublishingStyle(Value cutoff);
 };
 
-std::unique_ptr<Strategy> createCleverSelfishStrategy(bool noiseInTransactions, Value cutoff);
+std::unique_ptr<Strategy> createCleverSelfishStrategy(bool noiseInTransactions, Value cutoff, bool whaleEnabled, double whaleProb, double whaleMultiplier);
 
 #endif /* clevel_selfish_miner_hpp */

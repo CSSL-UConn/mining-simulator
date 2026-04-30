@@ -13,6 +13,6 @@
 
 class Strategy;
 
-std::unique_ptr<Strategy> createRationalStrategy(bool noiseInTransactions);
+std::unique_ptr<Strategy> createRationalStrategy(bool noiseInTransactions,bool whaleEnabled, double whaleProb, double whaleMultiplier);
 
 #endif /* rational_miner_hpp */

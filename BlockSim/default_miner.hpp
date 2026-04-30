@@ -18,9 +18,9 @@ class Block;
 class Blockchain;
 class Strategy;
 
-std::unique_ptr<Strategy> createDefaultStrategy(bool atomic, bool noiseInTransactions);
+std::unique_ptr<Strategy> createDefaultStrategy(bool atomic, bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier);
 
-Value defaultValueInMinedChild(const Blockchain &blockchain, const Block &mineHere, bool noiseInTransactions);
+Value defaultValueInMinedChild(const Blockchain &blockchain, const Block &mineHere, bool noiseInTransactions, bool whaleEnabled,double whaleProb, double whaleMultiplier);
 
 Block &defaultBlockToMineOnAtomic(const Miner &me, const Blockchain &chain);
 Block &defaultBlockToMineOnNonAtomic(const Miner &me, const Blockchain &chain);

@@ -20,7 +20,7 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-std::unique_ptr<Strategy> createDefaultStrategy(bool atomic, bool noiseInTransactions) {
+std::unique_ptr<Strategy> createDefaultStrategy(bool atomic, bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
     ParentSelectorFunc mineFunc;
     
     if (atomic) {
@@ -29,7 +29,7 @@ std::unique_ptr<Strategy> createDefaultStrategy(bool atomic, bool noiseInTransac
         mineFunc = defaultBlockToMineOnNonAtomic;
     }
     
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     return std::make_unique<Strategy>("default-honest", mineFunc, valueFunc);
 }
@@ -42,15 +42,26 @@ Block &defaultBlockToMineOnNonAtomic(const Miner &, const Blockchain &chain) {
     return chain.oldest(chain.getMaxHeightPub());
 }
 
-Value defaultValueInMinedChild(const Blockchain &chain, const Block &mineHere, bool noiseInTransactions) {
-    auto minVal = mineHere.nextBlockReward();
+Value defaultValueInMinedChild(const Blockchain &chain, const Block &mineHere,  bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
 
+
+    auto minVal = mineHere.nextBlockReward();
     auto maxVal = chain.rem(mineHere) + mineHere.nextBlockReward() + mineHere.tip;
-    //this represents some noise-- no noise, value would = valueMax
-    //value = ((valueMax - valueMin)*((dis(gen)+.7)/1.7)) + valueMin;
-    auto value = maxVal;
-    if (noiseInTransactions) {
-        value = valWithNoise(minVal, maxVal);
+    
+     if (rawValue(maxVal) < rawValue(minVal)) {
+        maxVal = minVal;
     }
+
+    Value value = maxVal;
+    if (noiseInTransactions) {
+        value = valWithNoise(minVal, maxVal, whaleEnabled, whaleProb, whaleMultiplier);
+    } else {
+        value = valNoNoise(maxVal, whaleEnabled, whaleProb, whaleMultiplier);
+    }
+
+    if (rawValue(value) < rawValue(minVal)) {
+        value = minVal;
+    }
+
     return value;
 }

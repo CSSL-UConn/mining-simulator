@@ -22,7 +22,7 @@ using std::placeholders::_2;
 Block &blockToMineOnAtomic(const Miner &me, const Blockchain &chain);
 Block &blockToMineOnNonAtomic(const Miner &me, const Blockchain &chain);
 
-std::unique_ptr<Strategy> createPettyStrategy(bool atomic, bool noiseInTransactions) {
+std::unique_ptr<Strategy> createPettyStrategy(bool atomic, bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
 
     ParentSelectorFunc mineFunc;
     
@@ -31,7 +31,7 @@ std::unique_ptr<Strategy> createPettyStrategy(bool atomic, bool noiseInTransacti
     } else {
         mineFunc = blockToMineOnNonAtomic;
     }
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     return std::make_unique<Strategy>("petty-honest", mineFunc, valueFunc);
 }

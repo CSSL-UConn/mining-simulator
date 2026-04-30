@@ -14,6 +14,6 @@
 //class Block;
 class Strategy;
 
-std::unique_ptr<Strategy> createDefaultStubbornTrailStrategy(bool noiseInTransactions, double gamma);
+std::unique_ptr<Strategy> createDefaultStubbornTrailStrategy(bool noiseInTransactions, double gamma, bool whaleEnabled, double whaleProb, double whaleMultiplier);
 
 #endif /* default_stubborn_trail_miner_hpp */

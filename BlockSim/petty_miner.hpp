@@ -13,6 +13,6 @@
 
 class Strategy;
 
-std::unique_ptr<Strategy> createPettyStrategy(bool atomic, bool noiseInTransactions);
+std::unique_ptr<Strategy> createPettyStrategy(bool atomic, bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier);
 
 #endif /* petty_miner_hpp */

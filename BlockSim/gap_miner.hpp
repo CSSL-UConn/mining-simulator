@@ -13,6 +13,6 @@
 
 class Strategy;
 
-std::unique_ptr<Strategy> createGapStrategy(bool atomic, bool noiseInTransactions);
+std::unique_ptr<Strategy> createGapStrategy(bool atomic, bool noiseInTransactions, bool whaleEnabled, double whaleProb, double whaleMultiplier);
 
 #endif /* gap_miner_hpp */

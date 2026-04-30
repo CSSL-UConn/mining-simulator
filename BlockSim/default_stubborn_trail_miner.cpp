@@ -26,9 +26,9 @@ using std::placeholders::_2;
 
 Block &defaultStubbornTrailBlockToMineOn(const Miner &me, const Blockchain &blockchain, double gamma);
 
-std::unique_ptr<Strategy> createDefaultStubbornTrailStrategy(bool noiseInTransactions, double gamma) {
+std::unique_ptr<Strategy> createDefaultStubbornTrailStrategy(bool noiseInTransactions, double gamma, bool whaleEnabled, double whaleProb, double whaleMultiplier) {
     auto mineFunc = std::bind(defaultStubbornTrailBlockToMineOn, _1, _2, gamma);
-    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions);
+    auto valueFunc = std::bind(defaultValueInMinedChild, _1, _2, noiseInTransactions, whaleEnabled, whaleProb, whaleMultiplier);
     
     return std::make_unique<Strategy>("default-stubbornTrail", mineFunc, valueFunc);
 }
