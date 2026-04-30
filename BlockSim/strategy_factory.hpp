@@ -14,9 +14,12 @@
 class Strategy;
 
 // Factory function to create strategies by name
-std::unique_ptr<Strategy> createStrategyByName(const std::string& name, 
-                                                bool atomic = false, 
-                                                bool noiseInTransactions = false,
-                                                double gamma = 0.0);
+std::unique_ptr<Strategy> createStrategyByName(const std::string& name,
+                                                bool atomic,
+                                                bool noiseInTransactions,
+                                                double gamma,
+                                                bool whaleEnabled = false,
+                                                double whaleProb = 0.05,
+                                                double whaleMultiplier = 3.0);
 
 #endif /* strategy_factory_hpp */
