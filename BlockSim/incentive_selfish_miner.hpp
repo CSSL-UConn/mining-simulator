@@ -27,7 +27,7 @@ protected:
     virtual BlockHeight heightToPublish(const Blockchain &blockchain, const Miner &me, std::vector<std::unique_ptr<Block>> &unpublishedBlocks) const;
 };
 
-std::unique_ptr<Strategy> createIncentiveSelfishStrategy(bool noiseInTransactions, double incentiveFraction, Value forksToIncentivize);
+std::unique_ptr<Strategy> createIncentiveSelfishStrategy(bool noiseInTransactions, double incentiveFraction, Value forksToIncentivize, bool whaleEnabled, double whaleProb, double whaleMultiplier);
 Block &incentiveSelfishBlockToMineOn(const Miner &me, const Blockchain &blockchain);
 
 #endif /* incentive_selfish_miner_hpp */
