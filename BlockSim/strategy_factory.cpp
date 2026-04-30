@@ -9,6 +9,7 @@
 #include "logging.h"
 #include <iostream>
 #include <algorithm>
+#include <regex>
 
 std::unique_ptr<Strategy> createStrategyByName(const std::string& name, 
                                                 bool atomic, 
@@ -108,6 +109,61 @@ std::unique_ptr<Strategy> createStrategyByName(const std::string& name,
     
     if (lowerName == "publish-4" || lowerName == "publish4") {
         return createPublishNStrategy(noiseInTransactions, 4, whaleEnabled, whaleProb, whaleMultiplier);
+    }
+    
+    // Incentivized strategies - parse with regex
+    // Formats: incentive-trail-<k>-<f>, incentive-trail-<k>-lead-<f>, 
+    //          incentive-trail-<k>-fork-<f>, incentive-trail-<k>-lead-fork-<f>,
+    //          incentive-selfish-<f>
+    // Where k = trail cutoff (1 or 2), f = incentive fraction (e.g., 2.0)
+    
+    // incentive-selfish-<f>
+    std::regex selfishIncentiveRegex("^incentive-selfish-([0-9.]+)$");
+    std::smatch selfishMatch;
+    if (std::regex_match(lowerName, selfishMatch, selfishIncentiveRegex)) {
+        double incentiveFraction = std::stod(selfishMatch[1].str());
+        return createIncentiveSelfishStrategy(noiseInTransactions, incentiveFraction, 1,
+            whaleEnabled, whaleProb, whaleMultiplier);
+    }
+    
+    // incentive-trail-<k>-lead-fork-<f>
+    std::regex trailLeadForkRegex("^incentive-trail-([12])-lead-fork-([0-9.]+)$");
+    std::smatch trailLeadForkMatch;
+    if (std::regex_match(lowerName, trailLeadForkMatch, trailLeadForkRegex)) {
+        int trailCutoff = std::stoi(trailLeadForkMatch[1].str());
+        double incentiveFraction = std::stod(trailLeadForkMatch[2].str());
+        return createIncentiveStubbornLeadTrailForkStrategy(noiseInTransactions, trailCutoff, 
+            incentiveFraction, 1, whaleEnabled, whaleProb, whaleMultiplier);
+    }
+    
+    // incentive-trail-<k>-lead-<f>
+    std::regex trailLeadRegex("^incentive-trail-([12])-lead-([0-9.]+)$");
+    std::smatch trailLeadMatch;
+    if (std::regex_match(lowerName, trailLeadMatch, trailLeadRegex)) {
+        int trailCutoff = std::stoi(trailLeadMatch[1].str());
+        double incentiveFraction = std::stod(trailLeadMatch[2].str());
+        return createIncentiveStubbornLeadTrailStrategy(noiseInTransactions, trailCutoff, 
+            incentiveFraction, 1, whaleEnabled, whaleProb, whaleMultiplier);
+    }
+    
+    // incentive-trail-<k>-fork-<f>
+    std::regex trailForkRegex("^incentive-trail-([12])-fork-([0-9.]+)$");
+    std::smatch trailForkMatch;
+    if (std::regex_match(lowerName, trailForkMatch, trailForkRegex)) {
+        int trailCutoff = std::stoi(trailForkMatch[1].str());
+        double incentiveFraction = std::stod(trailForkMatch[2].str());
+        return createIncentiveStubbornTrailForkStrategy(noiseInTransactions, trailCutoff, 
+            incentiveFraction, 1, whaleEnabled, whaleProb, whaleMultiplier);
+    }
+    
+    // incentive-trail-<k>-<f> (basic trail)
+    std::regex trailRegex("^incentive-trail-([12])-([0-9.]+)$");
+    std::smatch trailMatch;
+    if (std::regex_match(lowerName, trailMatch, trailRegex)) {
+        int trailCutoff = std::stoi(trailMatch[1].str());
+        double incentiveFraction = std::stod(trailMatch[2].str());
+        return createIncentiveStubbornTrailStrategy(noiseInTransactions, trailCutoff, 
+            incentiveFraction, 1, whaleEnabled, whaleProb, whaleMultiplier);
     }
     
     // If no match found, return default strategy
