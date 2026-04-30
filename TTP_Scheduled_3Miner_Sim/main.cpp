@@ -142,9 +142,8 @@ int main(int argc, const char *argv[]) {
                 if (miner1Strategy.empty()) miner1Strategy = "selfish";
                 
                 // Create honest-but-rational strategy for miner 2
-                auto honestStrat = createDefaultStrategy(
-                    scheduler.noisyTransaction, gammaVal,
-                    scheduler.whaleEnabled, scheduler.whaleProb, scheduler.whaleMultiplier);
+                // Rational miners choose forks based on expected profit, not blindly following protocol
+                auto honestStrat = createRationalStrategy(scheduler.noisyTransaction);
                 
                 MinerParameters miner0Params = {0, "Attacker-0", attacker0Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
                 MinerParameters miner1Params = {1, "Attacker-1", attacker1Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
