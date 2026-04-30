@@ -143,7 +143,8 @@ int main(int argc, const char *argv[]) {
                 
                 // Create honest-but-rational strategy for miner 2
                 // Rational miners choose forks based on expected profit, not blindly following protocol
-                auto honestStrat = createRationalStrategy(scheduler.noisyTransaction);
+                auto honestStrat = createRationalStrategy(scheduler.noisyTransaction,
+                    scheduler.whaleEnabled, scheduler.whaleProb, scheduler.whaleMultiplier);
                 
                 MinerParameters miner0Params = {0, "Attacker-0", attacker0Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
                 MinerParameters miner1Params = {1, "Attacker-1", attacker1Power, NETWORK_DELAY, COST_PER_SEC_TO_MINE};
